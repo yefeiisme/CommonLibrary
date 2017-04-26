@@ -463,6 +463,7 @@ void CServerNetwork::CloseAcceptor()
 #elif defined(__APPLE__)
 #endif
 		m_pListenLink->Disconnect();
+		m_pListenLink->ShutDown();
 	}
 }
 
