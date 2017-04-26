@@ -22,9 +22,6 @@ CClientNetwork::CClientNetwork()
 	m_uMaxConnCount		= 0;
 	m_uFreeConnIndex	= 0;
 
-	m_uRecvBufSize		= 0;
-	m_uSendBufSize		= 0;
-
 	m_uThreadFrame		= 0;
 
 	m_listActiveConn.clear();
@@ -48,9 +45,6 @@ CClientNetwork::~CClientNetwork()
 	SAFE_DELETE_ARR(m_pFreeConn);
 	m_uFreeConnIndex	= 0;
 
-	m_uRecvBufSize		= 0;
-	m_uSendBufSize		= 0;
-
 #if defined(WIN32) || defined(WIN64)
 	WSACleanup();
 #endif
@@ -68,8 +62,6 @@ bool CClientNetwork::Initialize(
 	)
 {
 	m_uMaxConnCount	= uClientCount;
-	m_uRecvBufSize	= uRecvBuffLen;
-	m_uSendBufSize	= uSendBuffLen;
 
 #if defined(WIN32) || defined(WIN64)
 	WSADATA	wsaData;
@@ -90,7 +82,7 @@ bool CClientNetwork::Initialize(
 
 	for (unsigned int uiIndex = 0; uiIndex < m_uMaxConnCount; ++uiIndex)
 	{
-		if (!m_pConnList[uiIndex].Initialize(m_uRecvBufSize, m_uSendBufSize, uTempRecvBuffLen, uTempSendBuffLen))
+		if (!m_pConnList[uiIndex].Initialize(uRecvBuffLen, uSendBuffLen, uTempRecvBuffLen, uTempSendBuffLen))
 			return false;
 
 		m_pConnList[uiIndex].m_uConnID	= uiIndex;

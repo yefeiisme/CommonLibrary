@@ -25,9 +25,6 @@ CServerNetwork::CServerNetwork()
 	m_uMaxConnCount			= 0;
 	m_uFreeConnIndex		= 0;
 
-	m_uClientRecvBuffSize	= 0;
-	m_uClientSendBuffSize	= 0;
-
 	m_uThreadFrame			= 0;
 
 #if defined(__linux)
@@ -335,19 +332,17 @@ bool CServerNetwork::Initialize(
 	}
 #endif
 
-	m_uMaxConnCount		= uConnectionNum;
-	m_uClientRecvBuffSize	= uRecvBufferLen;
-	m_uClientSendBuffSize	= uSendBufferLen;
+	m_uMaxConnCount			= uConnectionNum;
 	m_pfnConnectCallBack	= pfnConnectCallBack;
 	m_pFunParam				= lpParam;
 
 	if (0 == m_uMaxConnCount)
 		return false;
 
-	if (0 == m_uClientRecvBuffSize)
+	if (0 == uRecvBufferLen)
 		return false;
 
-	if (0 == m_uClientSendBuffSize)
+	if (0 == uSendBufferLen)
 		return false;
 
 	if (NULL == lpParam)
@@ -373,7 +368,7 @@ bool CServerNetwork::Initialize(
 
 	for (int nIndex = 0; nIndex < m_uMaxConnCount; ++nIndex)
 	{
-		if (!m_pTcpConnection[nIndex].Initialize(m_uClientRecvBuffSize, m_uClientSendBuffSize, uTempSendBufferLen, uTempRecvBufferLen))
+		if (!m_pTcpConnection[nIndex].Initialize(uRecvBufferLen, uSendBufferLen, uTempSendBufferLen, uTempRecvBufferLen))
 			return false;
 
 		m_pTcpConnection[nIndex].m_uConnID = nIndex;

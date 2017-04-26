@@ -18,9 +18,6 @@ private:
 	unsigned int			m_uMaxConnCount;
 	unsigned int			m_uFreeConnIndex;		// m_pFreeLink的索引，类似list的iterator用法
 
-	unsigned int			m_uRecvBufSize;
-	unsigned int			m_uSendBufSize;
-
 	unsigned int			m_uThreadFrame;
 
 	list<CTcpConnection*>	m_listActiveConn;
