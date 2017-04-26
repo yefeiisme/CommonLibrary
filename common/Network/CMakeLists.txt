@@ -1,0 +1,12 @@
+SET(LIBNETWORK_SRC
+conn_info/conn_info.cpp
+Server/Server.cpp
+Client/Client.cpp
+)
+include_directories (
+	"../../Share/Header"
+        "../../Share/Header/Base"
+)
+ADD_LIBRARY(network STATIC ${LIBNETWORK_SRC})
+INSTALL(TARGETS network
+        ARCHIVE DESTINATION lib)
