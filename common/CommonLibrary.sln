@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileLog", "FileLog\FileLog.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Daemon", "Daemon\Daemon.vcxproj", "{BD8BE691-06E2-47A9-9169-A12862570DE6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RingBuffer", "RingBuffer\RingBuffer.vcxproj", "{AFA0BC03-1CE1-4730-9627-F087F3670F44}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -27,6 +29,10 @@ Global
 		{BD8BE691-06E2-47A9-9169-A12862570DE6}.Debug|Win32.Build.0 = Debug|Win32
 		{BD8BE691-06E2-47A9-9169-A12862570DE6}.Release|Win32.ActiveCfg = Release|Win32
 		{BD8BE691-06E2-47A9-9169-A12862570DE6}.Release|Win32.Build.0 = Release|Win32
+		{AFA0BC03-1CE1-4730-9627-F087F3670F44}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AFA0BC03-1CE1-4730-9627-F087F3670F44}.Debug|Win32.Build.0 = Debug|Win32
+		{AFA0BC03-1CE1-4730-9627-F087F3670F44}.Release|Win32.ActiveCfg = Release|Win32
+		{AFA0BC03-1CE1-4730-9627-F087F3670F44}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

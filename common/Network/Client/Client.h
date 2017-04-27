@@ -10,10 +10,11 @@ class CTcpConnection;
 class CClientNetwork : public IClientNetwork
 {
 private:
+	CALLBACK_SERVER_EVENT	m_pfnConnectCallBack;
+	void					*m_pFunParam;
+
 	CTcpConnection			*m_pTcpConnection;
 	CTcpConnection			**m_pFreeConn;			// 当前处理空闲状态的CNetLink索引数组
-
-	void					*m_pFunParam;
 
 	unsigned int			m_uMaxConnCount;
 	unsigned int			m_uFreeConnIndex;		// m_pFreeLink的索引，类似list的iterator用法
@@ -40,6 +41,7 @@ public:
 										const unsigned int uRecvBuffLen,
 										const unsigned int uTempSendBuffLen,
 										const unsigned int uTempRecvBuffLen,
+										CALLBACK_SERVER_EVENT pfnConnectCallBack,
 										void *lpParm,
 										const unsigned int uSleepTime
 										);
@@ -67,6 +69,7 @@ private:
 	int						SetNoBlocking(CTcpConnection *pTcpConnection);
 	void					RemoveConnection(CTcpConnection *pTcpConnection);
 
+	void					ProcessConnectRequest();
 	void					ProcessConnectedConnection();
 	void					ProcessWaitConnectConnection();
 	void					ProcessWaitCloseConnection();

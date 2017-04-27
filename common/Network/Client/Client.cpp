@@ -58,10 +58,17 @@ bool CClientNetwork::Initialize(
 	const unsigned int uRecvBuffLen,
 	const unsigned int uTempSendBuffLen,
 	const unsigned int uTempRecvBuffLen,
+	CALLBACK_SERVER_EVENT pfnConnectCallBack,
 	void *lpParm,
 	const unsigned int uSleepTime
 	)
 {
+	if (NULL == pfnConnectCallBack)
+		return false;
+
+	if (NULL == lpParm)
+		return false;
+
 	m_uMaxConnCount	= uClientCount;
 
 #if defined(WIN32) || defined(WIN64)
@@ -91,11 +98,12 @@ bool CClientNetwork::Initialize(
 		m_pFreeConn[uIndex]	= &m_pTcpConnection[uIndex];
 	}
 
-	m_pFunParam		= lpParm;
+	m_pfnConnectCallBack	= pfnConnectCallBack;
+	m_pFunParam				= lpParm;
 
-	m_uSleepTime	= uSleepTime;
-	m_bExited		= false;
-	m_bRunning		= true;
+	m_uSleepTime			= uSleepTime;
+	m_bExited				= false;
+	m_bRunning				= true;
 
 	std::thread	threadNetwork(&CClientNetwork::ThreadFunc, this);
 	threadNetwork.detach();
@@ -108,6 +116,9 @@ void CClientNetwork::Release()
 	delete this;
 }
 
+// 代码还未完成，两个线程间都在使用m_uFreeConnIndex
+// 会导致不可预知的问题
+// ...
 ITcpConnection *CClientNetwork::ConnectTo(char *pstrAddress, const unsigned short usPort)
 {
 	if (m_uFreeConnIndex >= m_uMaxConnCount)
@@ -216,6 +227,10 @@ void CClientNetwork::RemoveConnection(CTcpConnection *pTcpConnection)
 //#elif defined(__APPLE__)
 //#endif
 	pTcpConnection->Disconnect();
+}
+
+void CClientNetwork::ProcessConnectRequest()
+{
 }
 
 void CClientNetwork::ProcessConnectedConnection()
@@ -486,6 +501,7 @@ IClientNetwork *CreateClientNetwork(
 	unsigned int uMaxReceiveBuff,
 	unsigned int uMaxTempSendBuff,
 	unsigned int uMaxTempReceiveBuff,
+	CALLBACK_SERVER_EVENT pfnConnectCallBack,
 	void *lpParm,
 	const unsigned int uSleepTime
 	)
@@ -494,7 +510,7 @@ IClientNetwork *CreateClientNetwork(
 	if (NULL == pClient)
 		return NULL;
 
-	if (!pClient->Initialize(uLinkCount, uMaxSendBuff, uMaxReceiveBuff, uMaxTempSendBuff, uMaxTempReceiveBuff, lpParm, uSleepTime))
+	if (!pClient->Initialize(uLinkCount, uMaxSendBuff, uMaxReceiveBuff, uMaxTempSendBuff, uMaxTempReceiveBuff, pfnConnectCallBack, lpParm, uSleepTime))
 	{
 		pClient->Release();
 		return NULL;

@@ -48,6 +48,7 @@ IClientNetwork *CreateClientNetwork(
 	const unsigned int uRecvBufferLen,			// 每个连接接收缓冲区的大小
 	const unsigned int uTempSendBufferLen,		// 最大发送包的大小
 	const unsigned int uTempRecvBufferLen,		// 最大接收包的大小
+	CALLBACK_SERVER_EVENT pfnConnectCallBack,	// 连接成功后的回调函数
 	void *lpParm,								// 回调函数的参数
 	const unsigned int uSleepTime				// 线程的Sleep时间
 	);
