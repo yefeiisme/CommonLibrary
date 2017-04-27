@@ -102,7 +102,7 @@ void CServerNetwork::AcceptClient(const SOCKET nNewSocket)
 
 	pNewLink->ReInit(nNewSocket);
 
-	pNewLink->TcpConnected();
+	pNewLink->Connected();
 
 	if (-1 == SetNoBlocking(pNewLink))
 	{

@@ -190,7 +190,7 @@ void CClientNetwork::TryConnect(const void *pPack)
 
 		pNewLink->ReInit(nNewSock);
 
-		pNewLink->AllConnected();
+		pNewLink->Connected();
 
 		m_listActiveConn.push_back(pNewLink);
 
@@ -209,7 +209,7 @@ void CClientNetwork::TryConnect(const void *pPack)
 
 		pNewLink->ReInit(nNewSock);
 
-		pNewLink->TcpConnected();
+		pNewLink->Connected();
 
 		pNewLink->SetConnectTarget(pRequest->pTarget);
 
@@ -394,8 +394,6 @@ void CClientNetwork::ProcessWaitConnectConnection()
 			continue;
 		}
 
-		pTcpConnection->ConnectSuccess();
-
 		m_listActiveConn.push_back(pTcpConnection);
 
 		Iter	= m_listWaitConnectedConn.erase(Iter);
@@ -421,80 +419,6 @@ void CClientNetwork::ProcessWaitCloseConnection()
 
 		Iter	= m_listCloseWaitConn.erase(Iter);
 	}
-}
-
-bool CClientNetwork::IsConnectSuccess(CTcpConnection *pTcpConnection)
-{
-	timeval	timeout	= {0, 0};
-
-	FD_ZERO(&m_ReadSet);
-	FD_ZERO(&m_WriteSet);
-
-	FD_SET(pTcpConnection->GetSock(), &m_ReadSet);
-	FD_SET(pTcpConnection->GetSock(), &m_WriteSet);
-
-	if (select(0, &m_ReadSet, &m_WriteSet, NULL, &timeout) <= 0)
-		return false;
-
-	if (!FD_ISSET(pTcpConnection->GetSock(), &m_WriteSet) && !FD_ISSET(pTcpConnection->GetSock(), &m_ReadSet))
-		return false;
-
-	int nError = 0;
-	socklen_t len = sizeof(nError);
-#if defined(WIN32) || defined(WIN64)
-	if (getsockopt(pTcpConnection->GetSock(), SOL_SOCKET, SO_ERROR, (char*)&nError, &len) < 0)
-#elif defined(__linux)
-	if (getsockopt(pTcpConnection->GetSock(), SOL_SOCKET, SO_ERROR, &nError, &len) < 0)
-#elif defined(__APPLE__)
-#endif
-	{
-#if defined(WIN32) || defined(WIN64)
-		g_pFileLog->WriteLog("getsockopt Failed errno=%d\n", WSAGetLastError());
-#elif defined(__linux)
-		g_pFileLog->WriteLog("getsockopt Failed errno=%d\n", errno);
-#elif defined(__APPLE__)
-#endif
-		closesocket(pTcpConnection->GetSock());
-		AddAvailableConnection(pTcpConnection);
-		return false;
-	}
-
-	if (nError != 0)
-	{
-#if defined(WIN32) || defined(WIN64)
-		g_pFileLog->WriteLog("Connnect Failed errno=%d\n", WSAGetLastError());
-#elif defined(__linux)
-		g_pFileLog->WriteLog("Connnect Failed errno=%d\n", errno);
-#elif defined(__APPLE__)
-#endif
-		closesocket(pTcpConnection->GetSock());
-		AddAvailableConnection(pTcpConnection);
-		return false;
-	}
-#if defined(WIN32) || defined(WIN64)
-	unsigned long ulNonBlock = 1;
-	if (ioctlsocket(pTcpConnection->GetSock(), FIONBIO, &ulNonBlock) == SOCKET_ERROR)
-	{
-		g_pFileLog->WriteLog("Set socket async failed! errno=%d\n", WSAGetLastError());
-		closesocket(pTcpConnection->GetSock());
-		AddAvailableConnection(pTcpConnection);
-		return false;
-	}
-#elif defined(__linux)
-	int nFlags = fcntl(pTcpConnection->GetSock(), F_GETFL, 0);
-	if (nFlags < 0 || fcntl(pTcpConnection->GetSock(), F_SETFL, nFlags | O_NONBLOCK | O_ASYNC ) < 0)
-	{
-		g_pFileLog->WriteLog("Set socket async failed! errno=%d\n", errno);
-		closesocket(pTcpConnection->GetSock());
-		AddAvailableConnection(pTcpConnection);
-		return false;
-	}
-#elif defined(__APPLE__)
-#endif
-
-	pTcpConnection->ConnectSuccess();
-
-	return true;
 }
 
 void CClientNetwork::ThreadFunc()

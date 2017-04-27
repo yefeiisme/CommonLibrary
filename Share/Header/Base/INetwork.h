@@ -4,7 +4,6 @@
 class ITcpConnection
 {
 public:
-	virtual bool		IsConnectSuccess() = 0;											// 只用于异步Connect时，Client去判断是否已经连接上Server，其它情况都不用调用此函数
 	virtual bool		IsConnect() = 0;												// 用于在逻辑层判断是否是连接状态
 	virtual const void	*GetPack(unsigned int &uPackLen) = 0;							// 获取已收到的网络数据包
 	virtual bool		PutPack(const void *pPack, unsigned int uPackLen) = 0;			// 发送网络数据包

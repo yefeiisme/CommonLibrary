@@ -15,7 +15,7 @@ enum E_NET_LINK_STATE
 class CTcpConnection : public ITcpConnection
 {
 private:
-	void						*m_pConnectTarget;		// 用于连接成功后的回调对象
+	void						*m_pConnectTarget;		// 用于连接成功后的回调对象（只做为客户端对象连接服务器端时有效）
 
 	/**********************发送缓冲区**********************/
 	char						*m_pSendBuf;
@@ -43,7 +43,6 @@ private:
 
 	bool						m_bTcpConnected;		// 网络连接是否连接状态
 	bool						m_bLogicConnected;		// 外部逻辑是否连接状态
-	bool						m_bConnectSuccess;		// 异步连接是否完成
 public:
 	CTcpConnection();
 	~CTcpConnection();
@@ -88,11 +87,6 @@ public:
 		return m_bLogicConnected;
 	}
 
-	inline bool					IsConnectSuccess()
-	{
-		return m_bConnectSuccess;
-	}
-
 	inline bool					IsConnect()
 	{
 		return NET_LINK_STATE_CONNECT == m_eStatus;
@@ -130,24 +124,9 @@ public:
 
 	void						Disconnect();
 
-	inline void					TcpConnected()
+	inline void					Connected()
 	{
-		m_bTcpConnected	= true;
-	}
-
-	inline void					ConnectSuccess()
-	{
-		m_bConnectSuccess	= true;
-	}
-
-	inline void					LogicConnected()
-	{
-		m_bLogicConnected	= true;
-	}
-
-	inline void					AllConnected()
-	{
-		m_bTcpConnected	= true;
+		m_bTcpConnected		= true;
 		m_bLogicConnected	= true;
 	}
 };

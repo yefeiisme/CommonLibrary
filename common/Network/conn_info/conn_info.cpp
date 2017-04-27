@@ -27,7 +27,6 @@ CTcpConnection::CTcpConnection()
 
 	m_bTcpConnected		= false;
 	m_bLogicConnected	= false;
-	m_bConnectSuccess	= false;
 }
 
 CTcpConnection::~CTcpConnection()
@@ -447,7 +446,6 @@ void CTcpConnection::Disconnect()
 {
 	m_pConnectTarget	= NULL;
 	m_bTcpConnected		= false;
-	m_bConnectSuccess	= false;
 
 	if (INVALID_SOCKET != m_nSock)
 	{

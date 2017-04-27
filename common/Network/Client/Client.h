@@ -86,7 +86,7 @@ private:
 	void					ProcessConnectedConnection();
 	void					ProcessWaitConnectConnection();
 	void					ProcessWaitCloseConnection();
-	bool					IsConnectSuccess(CTcpConnection *pNetLink);
+
 	void					ThreadFunc();
 	inline void				yield()
 	{
