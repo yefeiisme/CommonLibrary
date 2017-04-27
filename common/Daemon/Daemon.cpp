@@ -16,7 +16,7 @@
 #include "commondefine.h"
 #include "Daemon.h"
 
-#ifdef WIN32
+#if defined(WIN32) || defined(WIN64)
 
 bool DaemonInit(OnQuitSignal pfnQuitSignal)
 {
@@ -29,7 +29,7 @@ bool DaemonInit(OnQuitSignal pfnQuitSignal)
 	return true;
 }
 
-#else
+#elif defined(__linux)
 
 bool DaemonInit(OnQuitSignal pfnQuitSignal)
 {
@@ -70,16 +70,18 @@ bool DaemonInit(OnQuitSignal pfnQuitSignal)
 	return true;
 }
 
+#elif defined(__APPLE__)
+
 #endif
 
-void yield(const unsigned int uilTime)
+void yield(const unsigned int uTime)
 {
 #ifdef WIN32
-	Sleep(uilTime);
+	Sleep(uTime);
 #else
 	struct timeval sleeptime;
-	sleeptime.tv_sec = 0;
-	sleeptime.tv_usec=uilTime*1000;
+	sleeptime.tv_sec	= 0;
+	sleeptime.tv_usec	= uTime*1000;
 	select(0, 0, 0, 0, &sleeptime);
 #endif
 }

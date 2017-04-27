@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="KDebug.cpp" />
+    <ClCompile Include="KFile.cpp" />
+    <ClCompile Include="KFilePath.cpp" />
+    <ClCompile Include="KIniFile.cpp" />
+    <ClCompile Include="KLinkArray.cpp" />
+    <ClCompile Include="KMemBase.cpp" />
+    <ClCompile Include="KMemClass.cpp" />
+    <ClCompile Include="KMemStack.cpp" />
+    <ClCompile Include="KPakFile.cpp" />
+    <ClCompile Include="KStrBase.cpp" />
+    <ClCompile Include="KTabFile.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="KDebug.h" />
+    <ClInclude Include="KFile.h" />
+    <ClInclude Include="KFilePath.h" />
+    <ClInclude Include="KIniFile.h" />
+    <ClInclude Include="KLinkArray.h" />
+    <ClInclude Include="KList.h" />
+    <ClInclude Include="KMemBase.h" />
+    <ClInclude Include="KMemClass1.h" />
+    <ClInclude Include="KMemStack.h" />
+    <ClInclude Include="KNode.h" />
+    <ClInclude Include="KPakFile.h" />
+    <ClInclude Include="KStrBase.h" />
+    <ClInclude Include="KStrList.h" />
+    <ClInclude Include="KStrNode.h" />
+    <ClInclude Include="KTabFile.h" />
+    <ClInclude Include="XPackFile.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="MemClass.h" />
+  </ItemGroup>
+</Project>

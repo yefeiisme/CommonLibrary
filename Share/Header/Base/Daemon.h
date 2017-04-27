@@ -3,11 +3,12 @@
 
 #include "commondefine.h"
 
-#ifdef WIN32
+#if defined(WIN32) || defined(WIN64)
 #include "windows.h"
 typedef BOOL (WINAPI *OnQuitSignal)(DWORD CtrlType);
-#else
+#elif defined(__linux)
 typedef void (*OnQuitSignal)(int nSignal);
+#elif defined(__APPLE__)
 #endif
 
 bool	DaemonInit(OnQuitSignal pfnQuitSignal);

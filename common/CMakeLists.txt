@@ -18,5 +18,6 @@ endif (NOT SET_OUTPUT_DIRECTORY)
 
 add_subdirectory ("Daemon")
 add_subdirectory ("FileLog")
+add_subdirectory ("FileReader")
 add_subdirectory ("Network")
 add_subdirectory ("RingBuffer")
