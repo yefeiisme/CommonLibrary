@@ -2,19 +2,31 @@
 #define _ICLIENT_H_
 
 #include "INetwork.h"
+#include "IRingBuffer.h"
 #include <list>
 using namespace std;
+
+#define MAX_CONNECT_ADDR	128
+
+struct SConnectRequest
+{
+	void			*pTarget;
+	char			strAddr[MAX_CONNECT_ADDR];
+	unsigned short	usPort;
+};
 
 class CTcpConnection;
 
 class CClientNetwork : public IClientNetwork
 {
 private:
-	CALLBACK_SERVER_EVENT	m_pfnConnectCallBack;
+	CALLBACK_CLIENT_EVENT	m_pfnConnectCallBack;
 	void					*m_pFunParam;
 
 	CTcpConnection			*m_pTcpConnection;
 	CTcpConnection			**m_pFreeConn;			// 当前处理空闲状态的CNetLink索引数组
+
+	IRingBuffer				*m_pConnectBuffer;		// 用于接收连接请求的缓冲区
 
 	unsigned int			m_uMaxConnCount;
 	unsigned int			m_uFreeConnIndex;		// m_pFreeLink的索引，类似list的iterator用法
@@ -41,7 +53,7 @@ public:
 										const unsigned int uRecvBuffLen,
 										const unsigned int uTempSendBuffLen,
 										const unsigned int uTempRecvBuffLen,
-										CALLBACK_SERVER_EVENT pfnConnectCallBack,
+										CALLBACK_CLIENT_EVENT pfnConnectCallBack,
 										void *lpParm,
 										const unsigned int uSleepTime
 										);
@@ -56,7 +68,7 @@ public:
 	}
 
 	void					Release();
-	ITcpConnection			*ConnectTo(char *pstrAddr, const unsigned short usPort);
+	bool					ConnectTo(char *pstrAddr, const unsigned short usPort, void *pTarget);
 private:
 	inline void				AddAvailableConnection(CTcpConnection *pConnection)
 	{
@@ -66,6 +78,7 @@ private:
 		}
 	}
 
+	void					TryConnect(const void *pPack);
 	int						SetNoBlocking(CTcpConnection *pTcpConnection);
 	void					RemoveConnection(CTcpConnection *pTcpConnection);
 

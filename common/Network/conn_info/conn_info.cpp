@@ -3,6 +3,8 @@
 
 CTcpConnection::CTcpConnection()
 {
+	m_pConnectTarget	= NULL;
+
 	m_nSock				= INVALID_SOCKET;
 	m_uConnID			= 0;
 
@@ -443,6 +445,7 @@ int CTcpConnection::SendData()
 
 void CTcpConnection::Disconnect()
 {
+	m_pConnectTarget	= NULL;
 	m_bTcpConnected		= false;
 	m_bConnectSuccess	= false;
 

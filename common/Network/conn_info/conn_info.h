@@ -15,6 +15,8 @@ enum E_NET_LINK_STATE
 class CTcpConnection : public ITcpConnection
 {
 private:
+	void						*m_pConnectTarget;		// 用于连接成功后的回调对象
+
 	/**********************发送缓冲区**********************/
 	char						*m_pSendBuf;
 	char						*m_pTempSendBuf;
@@ -45,6 +47,16 @@ private:
 public:
 	CTcpConnection();
 	~CTcpConnection();
+
+	inline void					SetConnectTarget(void *pTarget)
+	{
+		m_pConnectTarget	= pTarget;
+	}
+
+	inline void					*GetConnectTarget()
+	{
+		return m_pConnectTarget;
+	}
 
 	inline SOCKET				GetSock()
 	{
