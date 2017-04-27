@@ -14,12 +14,7 @@ enum E_NET_LINK_STATE
 
 class CTcpConnection : public ITcpConnection
 {
-public:
-	SOCKET						m_nSock;
-	unsigned int				m_uConnID;
 private:
-	E_NET_LINK_STATE			m_eStatus;
-
 	/**********************发送缓冲区**********************/
 	char						*m_pSendBuf;
 	char						*m_pTempSendBuf;
@@ -39,12 +34,37 @@ private:
 	unsigned int				m_uTempRecvBufLen;
 	/**********************接收缓冲区**********************/
 
+	E_NET_LINK_STATE			m_eStatus;
+
+	SOCKET						m_nSock;
+	unsigned int				m_uConnID;
+
 	bool						m_bTcpConnected;		// 网络连接是否连接状态
 	bool						m_bLogicConnected;		// 外部逻辑是否连接状态
 	bool						m_bConnectSuccess;		// 异步连接是否完成
 public:
 	CTcpConnection();
 	~CTcpConnection();
+
+	inline SOCKET				GetSock()
+	{
+		return m_nSock;
+	}
+
+	inline void					SetSock(const SOCKET nSock)
+	{
+		m_nSock	= nSock;
+	}
+
+	inline unsigned int			GetConnID()
+	{
+		return m_uConnID;
+	}
+
+	inline void					SetConnID(const unsigned int uConnID)
+	{
+		m_uConnID	= uConnID;
+	}
 
 	inline bool					IsSocketConnected()
 	{

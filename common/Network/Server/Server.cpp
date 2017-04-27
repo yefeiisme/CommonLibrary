@@ -44,11 +44,17 @@ CServerNetwork::CServerNetwork()
 
 CServerNetwork::~CServerNetwork()
 {
-	m_pListenLink->Disconnect();
+	if (m_pListenLink->IsSocketConnected())
+	{
+		DisconnectConnection(m_pListenLink);
+	}
 
 	for (int nIndex = 0; nIndex < m_uMaxConnCount; ++nIndex)
 	{
-		m_pTcpConnection[nIndex].Disconnect();
+		if (m_pTcpConnection[nIndex].IsSocketConnected())
+		{
+			DisconnectConnection(&m_pTcpConnection[nIndex]);
+		}
 	}
 
 	SAFE_DELETE(m_pListenLink);
@@ -69,10 +75,10 @@ int CServerNetwork::SetNoBlocking(CTcpConnection *pTcpConnection)
 
 #if defined(WIN32) || defined(WIN64)
 	unsigned long ulNonBlock = 1;
-	return ioctlsocket(pTcpConnection->m_nSock, FIONBIO, &ulNonBlock);
+	return ioctlsocket(pTcpConnection->GetSock(), FIONBIO, &ulNonBlock);
 #elif defined(__linux)
 	int nFlags;
-	if ((nFlags = fcntl(pTcpConnection->m_nSock, F_GETFL, 0)) < 0 || fcntl(pTcpConnection->m_nSock, F_SETFL, nFlags | O_NONBLOCK) < 0)
+	if ((nFlags = fcntl(pTcpConnection->GetSock(), F_GETFL, 0)) < 0 || fcntl(pTcpConnection->GetSock(), F_SETFL, nFlags | O_NONBLOCK) < 0)
 		return -1;
 
 	epoll_event ev	={ 0 };
@@ -80,7 +86,7 @@ int CServerNetwork::SetNoBlocking(CTcpConnection *pTcpConnection)
 	ev.data.ptr	= pTcpConnection;
 	ev.events	= EPOLLIN | EPOLLET | EPOLLPRI | EPOLLHUP | EPOLLERR;
 
-	return epoll_ctl(m_nepfd, EPOLL_CTL_ADD, pTcpConnection->m_nSock, &ev);
+	return epoll_ctl(m_nepfd, EPOLL_CTL_ADD, pTcpConnection->GetSock(), &ev);
 #elif defined(__APPLE__)
 #endif
 }
@@ -117,24 +123,25 @@ void CServerNetwork::AcceptClient(const SOCKET nNewSocket)
 	m_pfnConnectCallBack(m_pFunParam, pNewLink);
 }
 
-void CServerNetwork::RemoveConnection(CTcpConnection *pTcpConnection)
+void CServerNetwork::DisconnectConnection(CTcpConnection *pTcpConnection)
 {
 #if defined(__linux)
-	int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, pTcpConnection->m_nSock, NULL);
+	int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, pTcpConnection->GetSock(), NULL);
 #elif defined(__APPLE__)
 #endif
 	pTcpConnection->Disconnect();
+}
+
+void CServerNetwork::RemoveConnection(CTcpConnection *pTcpConnection)
+{
+	DisconnectConnection(pTcpConnection);
 
 	AddAvailableConnection(pTcpConnection);
 }
 
 void CServerNetwork::CloseConnection(CTcpConnection *pTcpConnection)
 {
-#if defined(__linux)
-	int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, pTcpConnection->m_nSock, NULL);
-#elif defined(__APPLE__)
-#endif
-	pTcpConnection->Disconnect();
+	DisconnectConnection(pTcpConnection);
 
 	m_listCloseWaitConn.push_back(pTcpConnection);
 }
@@ -145,16 +152,16 @@ void CServerNetwork::ReadAction()
 	FD_ZERO(&m_ReadSet);
 	FD_ZERO(&m_ErrorSet);
 
-	FD_SET(m_pListenLink->m_nSock, &m_ReadSet);
+	FD_SET(m_pListenLink->GetSock(), &m_ReadSet);
 	timeval	timeout	= {0, 0};
 
 	if (select(0, &m_ReadSet, NULL, NULL, &timeout) > 0)
 	{
-		if (FD_ISSET(m_pListenLink->m_nSock, &m_ReadSet))
+		if (FD_ISSET(m_pListenLink->GetSock(), &m_ReadSet))
 		{
 			sockaddr_in	client_addr;
 			socklen_t	length	= sizeof(client_addr);
-			SOCKET	nNewSocket	= accept(m_pListenLink->m_nSock, (sockaddr*)&client_addr, &length);
+			SOCKET	nNewSocket	= accept(m_pListenLink->GetSock(), (sockaddr*)&client_addr, &length);
 			if (INVALID_SOCKET != nNewSocket)
 			{
 				AcceptClient(nNewSocket);
@@ -171,8 +178,8 @@ void CServerNetwork::ReadAction()
 		FD_ZERO(&m_ReadSet);
 		FD_ZERO(&m_ErrorSet);
 
-		FD_SET(pTcpConnection->m_nSock, &m_ReadSet);
-		FD_SET(pTcpConnection->m_nSock, &m_ErrorSet);
+		FD_SET(pTcpConnection->GetSock(), &m_ReadSet);
+		FD_SET(pTcpConnection->GetSock(), &m_ErrorSet);
 
 		if (select(0, &m_ReadSet, NULL, &m_ErrorSet, &timeout) <= 0)
 		{
@@ -180,7 +187,7 @@ void CServerNetwork::ReadAction()
 			continue;
 		}
 
-		if (FD_ISSET(pTcpConnection->m_nSock, &m_ReadSet))
+		if (FD_ISSET(pTcpConnection->GetSock(), &m_ReadSet))
 		{
 			if (pTcpConnection->RecvData() == -1)
 			{
@@ -188,7 +195,7 @@ void CServerNetwork::ReadAction()
 				Iter	= m_listActiveConn.erase(Iter);
 			}
 		}
-		else if (FD_ISSET(pTcpConnection->m_nSock, &m_ErrorSet))
+		else if (FD_ISSET(pTcpConnection->GetSock(), &m_ErrorSet))
 		{
 			CloseConnection(pTcpConnection);
 			Iter	= m_listActiveConn.erase(Iter);
@@ -212,13 +219,13 @@ void CServerNetwork::ReadAction()
 	for (int nLoopCount = 0; nLoopCount < nRetCount; ++nLoopCount)
 	{
 		CTcpConnection	*pNetLink	= (CTcpConnection*)wv[nLoopCount].data.ptr;
-		if (pNetLink->m_nSock == m_pListenLink->m_nSock)
+		if (pNetLink->GetSock() == m_pListenLink->GetSock())
 		{
 			sockaddr_in	client_addr;
 			socklen_t	length = sizeof(client_addr);
 			SOCKET		nNewSocket = INVALID_SOCKET;
 
-			while ((nNewSocket = accept(m_pListenLink->m_nSock, (sockaddr*)&client_addr, &length)) > 0)
+			while ((nNewSocket = accept(m_pListenLink->GetSock(), (sockaddr*)&client_addr, &length)) > 0)
 			{
 				AcceptClient(nNewSocket);
 			}
@@ -307,6 +314,18 @@ void CServerNetwork::ThreadFunc()
 		yield();
 	}
 
+	// 关闭accept
+	DisconnectConnection(m_pListenLink);
+
+	// 关闭已连接上的Connection
+	for (int nIndex = 0; nIndex < m_uMaxConnCount; ++nIndex)
+	{
+		if (m_pTcpConnection[nIndex].IsSocketConnected())
+		{
+			DisconnectConnection(&m_pTcpConnection[nIndex]);
+		}
+	}
+
 	m_bExited	= true;
 }
 
@@ -367,14 +386,14 @@ bool CServerNetwork::Initialize(
 	if (!m_pFreeConn)
 		return false;
 
-	for (int nIndex = 0; nIndex < m_uMaxConnCount; ++nIndex)
+	for (unsigned int uIndex = 0; uIndex < m_uMaxConnCount; ++uIndex)
 	{
-		if (!m_pTcpConnection[nIndex].Initialize(uRecvBufferLen, uSendBufferLen, uTempSendBufferLen, uTempRecvBufferLen))
+		if (!m_pTcpConnection[uIndex].Initialize(uRecvBufferLen, uSendBufferLen, uTempSendBufferLen, uTempRecvBufferLen))
 			return false;
 
-		m_pTcpConnection[nIndex].m_uConnID = nIndex;
+		m_pTcpConnection[uIndex].SetConnID(uIndex);
 
-		m_pFreeConn[nIndex]	= &m_pTcpConnection[nIndex];
+		m_pFreeConn[uIndex]	= &m_pTcpConnection[uIndex];
 	}
 
 #if defined(__linux)
@@ -394,28 +413,30 @@ bool CServerNetwork::Initialize(
 	tagAddr.sin_addr.s_addr	= INADDR_ANY;
 
 	// start listen
-	m_pListenLink->m_nSock = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_pListenLink->m_nSock < 0)
+	SOCKET	nSock	= socket(AF_INET, SOCK_STREAM, 0);
+	if (nSock < 0)
 	{
 		g_pFileLog->WriteLog("create listen socket failed!\n");
 		return false;
 	}
 
+	m_pListenLink->SetSock(nSock);
+
 	int nOnFlag = 1;
 #if defined(WIN32) || defined(WIN64)
-	setsockopt(m_pListenLink->m_nSock, SOL_SOCKET, SO_REUSEADDR, (const char*)&nOnFlag, sizeof(nOnFlag));
+	setsockopt(m_pListenLink->GetSock(), SOL_SOCKET, SO_REUSEADDR, (const char*)&nOnFlag, sizeof(nOnFlag));
 #elif defined(__linux)
-	setsockopt(m_pListenLink->m_nSock, SOL_SOCKET, SO_REUSEADDR, (const void*)&nOnFlag, sizeof(nOnFlag));
+	setsockopt(m_pListenLink->GetSock(), SOL_SOCKET, SO_REUSEADDR, (const void*)&nOnFlag, sizeof(nOnFlag));
 #elif defined(__APPLE__)
 #endif
 
-	if (::bind(m_pListenLink->m_nSock, (const sockaddr *)&tagAddr, sizeof(tagAddr)))
+	if (::bind(m_pListenLink->GetSock(), (const sockaddr *)&tagAddr, sizeof(tagAddr)))
 	{
 		g_pFileLog->WriteLog("bind listen socket failed!\n");
 		return false;
 	}
 
-	if (listen(m_pListenLink->m_nSock, 4096))
+	if (listen(m_pListenLink->GetSock(), 4096))
 	{
 		g_pFileLog->WriteLog("listen socket failed!\n");
 		return false;
@@ -445,19 +466,6 @@ bool CServerNetwork::Initialize(
 void CServerNetwork::Release()
 {
 	delete this;
-}
-
-void CServerNetwork::CloseAcceptor()
-{
-	if (m_pListenLink)
-	{
-#if defined(__linux)
-		int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, m_pListenLink->m_nSock, NULL);
-#elif defined(__APPLE__)
-#endif
-		m_pListenLink->Disconnect();
-		m_pListenLink->ShutDown();
-	}
 }
 
 IServerNetwork *CreateServerNetwork(

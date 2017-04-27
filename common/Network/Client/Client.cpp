@@ -15,7 +15,7 @@ CClientNetwork::CClientNetwork()
 	FD_ZERO(&m_WriteSet);
 	FD_ZERO(&m_ErrorSet);
 
-	m_pConnList			= NULL;
+	m_pTcpConnection	= NULL;
 	m_pFreeConn			= NULL;
 	m_pFunParam			= NULL;
 
@@ -36,11 +36,13 @@ CClientNetwork::~CClientNetwork()
 {
 	for (int nIndex = 0; nIndex < m_uMaxConnCount; ++nIndex)
 	{
-		m_pConnList[nIndex].ShutDown();
-		m_pConnList[nIndex].Disconnect();
+		if (m_pTcpConnection[nIndex].IsConnect())
+		{
+			m_pTcpConnection[nIndex].Disconnect();
+		}
 	}
 
-	SAFE_DELETE_ARR(m_pConnList);
+	SAFE_DELETE_ARR(m_pTcpConnection);
 	m_uMaxConnCount	= 0;
 	SAFE_DELETE_ARR(m_pFreeConn);
 	m_uFreeConnIndex	= 0;
@@ -71,22 +73,22 @@ bool CClientNetwork::Initialize(
 		return false;
 #endif
 
-	m_pConnList = new CTcpConnection[m_uMaxConnCount];
-	if (NULL == m_pConnList)
+	m_pTcpConnection = new CTcpConnection[m_uMaxConnCount];
+	if (NULL == m_pTcpConnection)
 		return false;
 
 	m_pFreeConn	= new CTcpConnection*[m_uMaxConnCount];
 	if (NULL == m_pFreeConn)
 		return false;
 
-	for (unsigned int uiIndex = 0; uiIndex < m_uMaxConnCount; ++uiIndex)
+	for (unsigned int uIndex = 0; uIndex < m_uMaxConnCount; ++uIndex)
 	{
-		if (!m_pConnList[uiIndex].Initialize(uRecvBuffLen, uSendBuffLen, uTempRecvBuffLen, uTempSendBuffLen))
+		if (!m_pTcpConnection[uIndex].Initialize(uRecvBuffLen, uSendBuffLen, uTempRecvBuffLen, uTempSendBuffLen))
 			return false;
 
-		m_pConnList[uiIndex].m_uConnID	= uiIndex;
+		m_pTcpConnection[uIndex].SetConnID(uIndex);
 
-		m_pFreeConn[uiIndex]			= &m_pConnList[uiIndex];
+		m_pFreeConn[uIndex]	= &m_pTcpConnection[uIndex];
 	}
 
 	m_pFunParam		= lpParm;
@@ -190,10 +192,10 @@ int CClientNetwork::SetNoBlocking(CTcpConnection *pTcpConnection)
 {
 #if defined(WIN32) || defined(WIN64)
 	unsigned long ulNonBlock = 1;
-	return (ioctlsocket(pTcpConnection->m_nSock, FIONBIO, &ulNonBlock) == SOCKET_ERROR);
+	return (ioctlsocket(pTcpConnection->GetSock(), FIONBIO, &ulNonBlock) == SOCKET_ERROR);
 #elif defined(__linux)
-	int nFlags = fcntl(pTcpConnection->m_nSock, F_GETFL, 0);
-	if (nFlags < 0 || fcntl(pTcpConnection->m_nSock, F_SETFL, nFlags | O_NONBLOCK | O_ASYNC) < 0)
+	int nFlags = fcntl(pTcpConnection->GetSock(), F_GETFL, 0);
+	if (nFlags < 0 || fcntl(pTcpConnection->GetSock(), F_SETFL, nFlags | O_NONBLOCK | O_ASYNC) < 0)
 		return -1;
 
 	return 0;
@@ -210,7 +212,7 @@ int CClientNetwork::SetNoBlocking(CTcpConnection *pTcpConnection)
 void CClientNetwork::RemoveConnection(CTcpConnection *pTcpConnection)
 {
 //#if defined(__linux)
-//	int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, pTcpConnection->m_nSock, NULL);
+//	int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, pTcpConnection->GetSock(), NULL);
 //#elif defined(__APPLE__)
 //#endif
 	pTcpConnection->Disconnect();
@@ -229,9 +231,9 @@ void CClientNetwork::ProcessConnectedConnection()
 		FD_ZERO(&m_WriteSet);
 		FD_ZERO(&m_ErrorSet);
 
-		FD_SET(pTcpConnection->m_nSock, &m_ReadSet);
-		FD_SET(pTcpConnection->m_nSock, &m_WriteSet);
-		FD_SET(pTcpConnection->m_nSock, &m_ErrorSet);
+		FD_SET(pTcpConnection->GetSock(), &m_ReadSet);
+		FD_SET(pTcpConnection->GetSock(), &m_WriteSet);
+		FD_SET(pTcpConnection->GetSock(), &m_ErrorSet);
 
 		if (select(1024, &m_ReadSet, &m_WriteSet, &m_ErrorSet, &timeout) <= 0)
 		{
@@ -239,7 +241,7 @@ void CClientNetwork::ProcessConnectedConnection()
 			return;
 		}
 
-		if (FD_ISSET(pTcpConnection->m_nSock, &m_ErrorSet))
+		if (FD_ISSET(pTcpConnection->GetSock(), &m_ErrorSet))
 		{
 			RemoveConnection(pTcpConnection);
 			m_listCloseWaitConn.push_back(pTcpConnection);
@@ -247,7 +249,7 @@ void CClientNetwork::ProcessConnectedConnection()
 			continue;
 		}
 
-		if (FD_ISSET(pTcpConnection->m_nSock, &m_ReadSet))
+		if (FD_ISSET(pTcpConnection->GetSock(), &m_ReadSet))
 		{
 			if (pTcpConnection->RecvData() == -1)
 			{
@@ -258,7 +260,7 @@ void CClientNetwork::ProcessConnectedConnection()
 			}
 		}
 
-		if (FD_ISSET(pTcpConnection->m_nSock, &m_WriteSet))
+		if (FD_ISSET(pTcpConnection->GetSock(), &m_WriteSet))
 		{
 			if (pTcpConnection->SendData() == -1)
 			{
@@ -285,8 +287,8 @@ void CClientNetwork::ProcessWaitConnectConnection()
 		FD_ZERO(&m_ReadSet);
 		FD_ZERO(&m_WriteSet);
 
-		FD_SET(pTcpConnection->m_nSock, &m_ReadSet);
-		FD_SET(pTcpConnection->m_nSock, &m_WriteSet);
+		FD_SET(pTcpConnection->GetSock(), &m_ReadSet);
+		FD_SET(pTcpConnection->GetSock(), &m_WriteSet);
 
 		if (select(0, &m_ReadSet, &m_WriteSet, NULL, &timeout) <= 0)
 		{
@@ -294,7 +296,7 @@ void CClientNetwork::ProcessWaitConnectConnection()
 			continue;
 		}
 
-		if (!FD_ISSET(pTcpConnection->m_nSock, &m_WriteSet) && !FD_ISSET(pTcpConnection->m_nSock, &m_ReadSet))
+		if (!FD_ISSET(pTcpConnection->GetSock(), &m_WriteSet) && !FD_ISSET(pTcpConnection->GetSock(), &m_ReadSet))
 		{
 			++Iter;
 			continue;
@@ -303,9 +305,9 @@ void CClientNetwork::ProcessWaitConnectConnection()
 		int nError = 0;
 		socklen_t len = sizeof(nError);
 #if defined(WIN32) || defined(WIN64)
-		if (getsockopt(pTcpConnection->m_nSock, SOL_SOCKET, SO_ERROR, (char*)&nError, &len) < 0)
+		if (getsockopt(pTcpConnection->GetSock(), SOL_SOCKET, SO_ERROR, (char*)&nError, &len) < 0)
 #elif defined(__linux)
-		if (getsockopt(pTcpConnection->m_nSock, SOL_SOCKET, SO_ERROR, &nError, &len) < 0)
+		if (getsockopt(pTcpConnection->GetSock(), SOL_SOCKET, SO_ERROR, &nError, &len) < 0)
 #elif defined(__APPLE__)
 #endif
 		{
@@ -386,21 +388,21 @@ bool CClientNetwork::IsConnectSuccess(CTcpConnection *pTcpConnection)
 	FD_ZERO(&m_ReadSet);
 	FD_ZERO(&m_WriteSet);
 
-	FD_SET(pTcpConnection->m_nSock, &m_ReadSet);
-	FD_SET(pTcpConnection->m_nSock, &m_WriteSet);
+	FD_SET(pTcpConnection->GetSock(), &m_ReadSet);
+	FD_SET(pTcpConnection->GetSock(), &m_WriteSet);
 
 	if (select(0, &m_ReadSet, &m_WriteSet, NULL, &timeout) <= 0)
 		return false;
 
-	if (!FD_ISSET(pTcpConnection->m_nSock, &m_WriteSet) && !FD_ISSET(pTcpConnection->m_nSock, &m_ReadSet))
+	if (!FD_ISSET(pTcpConnection->GetSock(), &m_WriteSet) && !FD_ISSET(pTcpConnection->GetSock(), &m_ReadSet))
 		return false;
 
 	int nError = 0;
 	socklen_t len = sizeof(nError);
 #if defined(WIN32) || defined(WIN64)
-	if (getsockopt(pTcpConnection->m_nSock, SOL_SOCKET, SO_ERROR, (char*)&nError, &len) < 0)
+	if (getsockopt(pTcpConnection->GetSock(), SOL_SOCKET, SO_ERROR, (char*)&nError, &len) < 0)
 #elif defined(__linux)
-	if (getsockopt(pTcpConnection->m_nSock, SOL_SOCKET, SO_ERROR, &nError, &len) < 0)
+	if (getsockopt(pTcpConnection->GetSock(), SOL_SOCKET, SO_ERROR, &nError, &len) < 0)
 #elif defined(__APPLE__)
 #endif
 	{
@@ -410,7 +412,7 @@ bool CClientNetwork::IsConnectSuccess(CTcpConnection *pTcpConnection)
 		g_pFileLog->WriteLog("getsockopt Failed errno=%d\n", errno);
 #elif defined(__APPLE__)
 #endif
-		closesocket(pTcpConnection->m_nSock);
+		closesocket(pTcpConnection->GetSock());
 		AddAvailableConnection(pTcpConnection);
 		return false;
 	}
@@ -423,25 +425,25 @@ bool CClientNetwork::IsConnectSuccess(CTcpConnection *pTcpConnection)
 		g_pFileLog->WriteLog("Connnect Failed errno=%d\n", errno);
 #elif defined(__APPLE__)
 #endif
-		closesocket(pTcpConnection->m_nSock);
+		closesocket(pTcpConnection->GetSock());
 		AddAvailableConnection(pTcpConnection);
 		return false;
 	}
 #if defined(WIN32) || defined(WIN64)
 	unsigned long ulNonBlock = 1;
-	if (ioctlsocket(pTcpConnection->m_nSock, FIONBIO, &ulNonBlock) == SOCKET_ERROR)
+	if (ioctlsocket(pTcpConnection->GetSock(), FIONBIO, &ulNonBlock) == SOCKET_ERROR)
 	{
 		g_pFileLog->WriteLog("Set socket async failed! errno=%d\n", WSAGetLastError());
-		closesocket(pTcpConnection->m_nSock);
+		closesocket(pTcpConnection->GetSock());
 		AddAvailableConnection(pTcpConnection);
 		return false;
 	}
 #elif defined(__linux)
-	int nFlags = fcntl(pTcpConnection->m_nSock, F_GETFL, 0);
-	if (nFlags < 0 || fcntl(pTcpConnection->m_nSock, F_SETFL, nFlags | O_NONBLOCK | O_ASYNC ) < 0)
+	int nFlags = fcntl(pTcpConnection->GetSock(), F_GETFL, 0);
+	if (nFlags < 0 || fcntl(pTcpConnection->GetSock(), F_SETFL, nFlags | O_NONBLOCK | O_ASYNC ) < 0)
 	{
 		g_pFileLog->WriteLog("Set socket async failed! errno=%d\n", errno);
-		closesocket(pTcpConnection->m_nSock);
+		closesocket(pTcpConnection->GetSock());
 		AddAvailableConnection(pTcpConnection);
 		return false;
 	}
@@ -464,6 +466,15 @@ void CClientNetwork::ThreadFunc()
 		ProcessWaitCloseConnection();
 
 		yield();
+	}
+
+	// 关闭已连接上的Connection
+	for (int nIndex = 0; nIndex < m_uMaxConnCount; ++nIndex)
+	{
+		if (m_pTcpConnection[nIndex].IsSocketConnected())
+		{
+			m_pTcpConnection[nIndex].Disconnect();
+		}
 	}
 
 	m_bExited	= true;

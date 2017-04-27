@@ -10,7 +10,7 @@ class CTcpConnection;
 class CClientNetwork : public IClientNetwork
 {
 private:
-	CTcpConnection			*m_pConnList;
+	CTcpConnection			*m_pTcpConnection;
 	CTcpConnection			**m_pFreeConn;			// 当前处理空闲状态的CNetLink索引数组
 
 	void					*m_pFunParam;

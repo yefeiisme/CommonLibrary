@@ -52,6 +52,7 @@ private:
 	int						SetNoBlocking(CTcpConnection *pTcpConnection);
 	void					AcceptClient(const SOCKET nNewSocket);
 
+	void					DisconnectConnection(CTcpConnection *pTcpConnection);
 	void					RemoveConnection(CTcpConnection *pTcpConnection);
 	void					CloseConnection(CTcpConnection *pTcpConnection);
 
@@ -99,7 +100,6 @@ public:
 	}
 
 	void					Release();
-	void					CloseAcceptor();
 };
 
 #endif
