@@ -32,11 +32,11 @@ public:
 	{
 		return m_Height;
 	};
-	bool		GetString(const int nRow, char *szColumn, char *lpDefault, char *lpRString, const unsigned long dwSize);
-	bool		GetString(const int nRow, const int nColumn, char *lpDefault, char *lpRString, const unsigned long dwSize);
-	bool		GetInteger(const int nRow, char *szColumn, const int nDefault, int *pnValue);
+	bool		GetString(const int nRow, char *pstrColumn, char *pstrDefault, char *pstrRString, const unsigned long dwSize);
+	bool		GetString(const int nRow, const int nColumn, char *pstrDefault, char *pstrRString, const unsigned long dwSize);
+	bool		GetInteger(const int nRow, char *pstrColumn, const int nDefault, int *pnValue);
 	bool		GetInteger(const int nRow, const int nColumn, const int nDefault, int *pnValue);
-	bool		GetFloat(const int nRow, char *szColumn, const float fDefault, float *pfValue);
+	bool		GetFloat(const int nRow, char *pstrColumn, const float fDefault, float *pfValue);
 	bool		GetFloat(const int nRow, const int nColumn, const float fDefault, float *pfValue);
 	void		Clear();
 	void		Release();

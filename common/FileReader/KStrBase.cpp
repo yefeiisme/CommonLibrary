@@ -3,6 +3,7 @@
 #include "KMemBase.h"
 #include "KStrBase.h"
 #include <string.h>
+
  int g_StrLen(LPCSTR lpStr)
 {
 #ifdef WIN32
@@ -20,7 +21,7 @@
 	}
 	return nLen;
 #else
-     return strlen(lpStr);
+	return strlen(lpStr);
 #endif
 }
 //---------------------------------------------------------------------------
@@ -45,7 +46,7 @@
 	}
 	return lpEnd;
 #else
-     return (char *)lpStr + strlen(lpStr);
+	return (char *)lpStr + strlen(lpStr);
 #endif
 }
 //---------------------------------------------------------------------------
@@ -75,7 +76,7 @@
 		rep		movsb
 	};
 #else
-    strcpy(lpDest, lpSrc);
+	strcpy(lpDest, lpSrc);
 #endif
 }
 //---------------------------------------------------------------------------
@@ -126,7 +127,7 @@ loc_little_equal:
 finished:
 	};
 #else
-    strncpy(lpDest, lpSrc, uMaxLen);
+	strncpy(lpDest, lpSrc, uMaxLen);
 #endif
 }
 //---------------------------------------------------------------------------
@@ -196,108 +197,4 @@ finished:
 	if (nMaxLen > nLen2)
 		nMaxLen = nLen2;
 	return g_MemComp((void*)lpDest, (void*)lpSrc, nMaxLen);
-}
-//---------------------------------------------------------------------------
-// 函数:	StrUpper
-// 功能:	小写字母转大写字母
-// 参数:	lpDest	:	字符串
-// 返回:	void
-//---------------------------------------------------------------------------
- void g_StrUpper(LPSTR lpDest)
-{
-#ifdef WIN32
-	__asm
-	{
-		mov		esi, lpDest
-loc_lodsb:
-		lodsb
-		or		al, al
-		je		loc_exit
-		cmp		al, 'a'
-		jb		loc_lodsb
-		cmp		al, 'z'
-		ja		loc_lodsb
-		sub		al, 0x20
-		mov		[esi - 1], al
-		jmp		loc_lodsb
-loc_exit:
-	}
-#else
-     char *ptr = lpDest;
-     while(*ptr) {
-         if(*ptr >= 'a' && *ptr <= 'z') *ptr += 'A' - 'a';
-//          *ptr = toupper(*ptr);
-          ptr++;
-     }
-#endif
-}
-//---------------------------------------------------------------------------
-// 函数:	StrLower
-// 功能:	大写字母转小写字母
-// 参数:	lpDest	:	字符串
-// 返回:	void
-//---------------------------------------------------------------------------
- void g_StrLower(LPSTR lpDest)
-{
-#ifdef WIN32
-	__asm
-	{
-		mov		esi, lpDest
-loc_lodsb:
-		lodsb
-		or		al, al
-		je		loc_exit
-		cmp		al, 'A'
-		jb		loc_lodsb
-		cmp		al, 'Z'
-		ja		loc_lodsb
-		add		al, 0x20
-		mov		[esi - 1], al
-		jmp		loc_lodsb
-loc_exit:
-	}
-#else
-     char *ptr = lpDest;
-     while(*ptr) {
-         if(*ptr >= 'A' && *ptr <= 'Z') *ptr += 'a' - 'A';
-//          *ptr = tolower(*ptr);
-          ptr++;
-     }
-#endif
-}
-//---------------------------------------------------------------------------
- void g_StrRep(LPSTR lpDest, LPSTR lpSrc, LPSTR lpRep)
-{
-	int		nSrcLen = g_StrLen(lpSrc);
-	int		nDestLen = g_StrLen(lpDest);
-	int		nMaxLen = nDestLen - nSrcLen + g_StrLen(lpRep) + 1;
-	char	*pStart = NULL;
-        int i;
-	for (i = 0; i < nDestLen - nSrcLen; i++)
-	{
-		if (g_StrCmpLen(&lpDest[i], lpSrc, nSrcLen))
-			break;
-	}
-	if (i == nDestLen - nSrcLen)
-		return;
-
-	pStart = new char[nMaxLen];
-
-	if (i != 0)
-	{
-		g_StrCpyLen(pStart, lpDest, i);
-		g_StrCat(pStart, lpRep);
-		g_StrCat(pStart, &lpDest[i + nSrcLen]);
-	}
-	else
-	{
-		g_StrCpy(pStart, lpRep);
-		g_StrCat(pStart, &lpDest[nSrcLen]);
-	}
-	g_StrCpy(lpDest, pStart);
-	if (pStart)
-	{
-		delete [] pStart;
-		pStart = NULL;
-	}
 }

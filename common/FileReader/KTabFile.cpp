@@ -172,14 +172,14 @@ void KTabFile::CreateTabOffset()
 //			dwSize			返回字符串的最大长度
 // 返回:	是否成功
 //---------------------------------------------------------------------------
-bool KTabFile::GetString(const int nRow, char *szColumn, char *lpDefault, char *lpRString, const DWORD dwSize)
+bool KTabFile::GetString(const int nRow, char *pstrColumn, char *pstrDefault, char *pstrRString, const DWORD dwSize)
 {
-	int nColumn = FindColumn(szColumn);
+	int nColumn = FindColumn(pstrColumn);
 
-	if (GetValue(nRow - 1, nColumn - 1, lpRString, dwSize))
+	if (GetValue(nRow - 1, nColumn - 1, pstrRString, dwSize))
 		return true;
 
-	g_StrCpyLen(lpRString, lpDefault, dwSize);
+	g_StrCpyLen(pstrRString, pstrDefault, dwSize);
 
 	return false;
 }
