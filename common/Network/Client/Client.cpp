@@ -22,14 +22,14 @@ CClientNetwork::CClientNetwork()
 	m_uMaxConnCount		= 0;
 	m_uFreeConnIndex	= 0;
 
-	m_uThreadFrame		= 0;
+	m_uSleepTime		= 0;
 
 	m_listActiveConn.clear();
 	m_listWaitConnectedConn.clear();
 	m_listCloseWaitConn.clear();
 
 	m_bRunning			= false;
-	m_bThread			= false;
+	m_bExited			= false;
 }
 
 CClientNetwork::~CClientNetwork()
@@ -57,8 +57,7 @@ bool CClientNetwork::Initialize(
 	const unsigned int uTempSendBuffLen,
 	const unsigned int uTempRecvBuffLen,
 	void *lpParm,
-	const bool bThread,
-	const unsigned int uThreadFrame
+	const unsigned int uSleepTime
 	)
 {
 	m_uMaxConnCount	= uClientCount;
@@ -92,16 +91,12 @@ bool CClientNetwork::Initialize(
 
 	m_pFunParam		= lpParm;
 
-	m_bThread		= bThread;
-	m_uThreadFrame	= uThreadFrame;
+	m_uSleepTime	= uSleepTime;
+	m_bExited		= false;
+	m_bRunning		= true;
 
-	if (m_bThread)
-	{
-		m_bRunning	= true;
-
-		std::thread	threadNetwork(&CClientNetwork::ThreadFunc, this);
-		threadNetwork.detach();
-	}
+	std::thread	threadNetwork(&CClientNetwork::ThreadFunc, this);
+	threadNetwork.detach();
 
 	return true;
 }
@@ -189,18 +184,6 @@ ITcpConnection *CClientNetwork::ConnectTo(char *pstrAddress, const unsigned shor
 	}
 
 	return NULL;
-}
-
-void CClientNetwork::DoNetworkAction()
-{
-	if (m_bThread)
-		return;
-
-	ProcessConnectedConnection();
-
-	ProcessWaitConnectConnection();
-
-	ProcessWaitCloseConnection();
 }
 
 int CClientNetwork::SetNoBlocking(CTcpConnection *pTcpConnection)
@@ -482,6 +465,8 @@ void CClientNetwork::ThreadFunc()
 
 		yield();
 	}
+
+	m_bExited	= true;
 }
 
 IClientNetwork *CreateClientNetwork(
@@ -491,15 +476,14 @@ IClientNetwork *CreateClientNetwork(
 	unsigned int uMaxTempSendBuff,
 	unsigned int uMaxTempReceiveBuff,
 	void *lpParm,
-	const bool bThread,
-	const unsigned int uSleepFrame
+	const unsigned int uSleepTime
 	)
 {
 	CClientNetwork	*pClient = new CClientNetwork();
 	if (NULL == pClient)
 		return NULL;
 
-	if (!pClient->Initialize(uLinkCount, uMaxSendBuff, uMaxReceiveBuff, uMaxTempSendBuff, uMaxTempReceiveBuff, lpParm, bThread, uSleepFrame))
+	if (!pClient->Initialize(uLinkCount, uMaxSendBuff, uMaxReceiveBuff, uMaxTempSendBuff, uMaxTempReceiveBuff, lpParm, uSleepTime))
 	{
 		pClient->Release();
 		return NULL;

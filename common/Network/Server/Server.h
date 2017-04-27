@@ -20,7 +20,7 @@ private:
 	unsigned int			m_uMaxConnCount;
 	unsigned int			m_uFreeConnIndex;		// m_pFreeLink的索引，类似list的iterator用法
 
-	unsigned int			m_uThreadFrame;
+	unsigned int			m_uSleepTime;
 
 #ifdef __linux
 	int						m_nepfd;
@@ -34,7 +34,7 @@ private:
 	list<CTcpConnection*>	m_listCloseWaitConn;
 
 	bool					m_bRunning;
-	bool					m_bThread;
+	bool					m_bExited;
 private:
 	inline CTcpConnection	*GetNewConnection()
 	{
@@ -65,11 +65,11 @@ private:
 	inline void				yield()
 	{
 #if defined (WIN32) || defined (WIN64)
-		Sleep(m_uThreadFrame);
+		Sleep(m_uSleepTime);
 #else
 		struct timeval sleeptime;
 		sleeptime.tv_sec	= 0;
-		sleeptime.tv_usec	= m_uThreadFrame * 1000;
+		sleeptime.tv_usec	= m_uSleepTime * 1000;
 		select(0, 0, 0, 0, &sleeptime);
 #endif
 	}
@@ -86,13 +86,20 @@ public:
 										const unsigned int uRecvBufferLen,
 										const unsigned int uTempSendBufferLen,
 										const unsigned int uTempRecvBufferLen,
-										const bool bThread,
-										const unsigned int uSleepFrame
+										const unsigned int uSleepTime
 										);
-	void					Stop();
+	inline void				Stop()
+	{
+		m_bRunning	= false;
+	}
+
+	inline bool				IsExited()
+	{
+		return m_bExited;
+	}
+
 	void					Release();
 	void					CloseAcceptor();
-	void					DoNetworkAction();
 };
 
 #endif

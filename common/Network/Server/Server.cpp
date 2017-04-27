@@ -25,7 +25,7 @@ CServerNetwork::CServerNetwork()
 	m_uMaxConnCount			= 0;
 	m_uFreeConnIndex		= 0;
 
-	m_uThreadFrame			= 0;
+	m_uSleepTime			= 0;
 
 #if defined(__linux)
 	m_nepfd					= 0;
@@ -39,7 +39,7 @@ CServerNetwork::CServerNetwork()
 	m_listCloseWaitConn.clear();
 
 	m_bRunning				= false;
-	m_bThread				= false;
+	m_bExited				= false;
 }
 
 CServerNetwork::~CServerNetwork()
@@ -306,6 +306,8 @@ void CServerNetwork::ThreadFunc()
 
 		yield();
 	}
+
+	m_bExited	= true;
 }
 
 bool CServerNetwork::Initialize(
@@ -317,8 +319,7 @@ bool CServerNetwork::Initialize(
 	const unsigned int uRecvBufferLen,
 	const unsigned int uTempSendBufferLen,
 	const unsigned int uTempRecvBufferLen,
-	const bool bThread,
-	const unsigned int uThreadFrame
+	const unsigned int uSleepTime
 	)
 {
 #if defined(WIN32) || defined(WIN64)
@@ -431,22 +432,14 @@ bool CServerNetwork::Initialize(
 		return false;
 	}
 
-	m_bThread		= bThread;
-	m_uThreadFrame	= uThreadFrame;
+	m_uSleepTime	= uSleepTime;
+	m_bExited		= false;
+	m_bRunning		= true;
 
-	if (m_bThread)
-	{
-		m_bRunning	= true;
-
-		std::thread	threadNetwork(&CServerNetwork::ThreadFunc, this);
-		threadNetwork.detach();
-	}
+	std::thread	threadNetwork(&CServerNetwork::ThreadFunc, this);
+	threadNetwork.detach();
 
 	return true;
-}
-
-void CServerNetwork::Stop()
-{
 }
 
 void CServerNetwork::Release()
@@ -467,16 +460,6 @@ void CServerNetwork::CloseAcceptor()
 	}
 }
 
-void CServerNetwork::DoNetworkAction()
-{
-	if (m_bThread)
-		return;
-
-	ReadAction();
-	WriteAction();
-	CloseAction();
-}
-
 IServerNetwork *CreateServerNetwork(
 	unsigned short usPort,
 	void *lpParam,
@@ -486,15 +469,14 @@ IServerNetwork *CreateServerNetwork(
 	unsigned int uRecvBufferLen,
 	unsigned int uTempSendBufferLen,
 	unsigned int uTempRecvBufferLen,
-	const bool bThread,
-	const unsigned int uSleepFrame
+	const unsigned int uSleepTime
 )
 {
 	CServerNetwork	*pServer = new CServerNetwork();
 	if (NULL == pServer)
 		return NULL;
 
-	if (!pServer->Initialize(usPort, lpParam, pfnConnectCallBack, uConnectionNum, uSendBufferLen, uRecvBufferLen, uTempSendBufferLen, uTempRecvBufferLen, bThread, uSleepFrame))
+	if (!pServer->Initialize(usPort, lpParam, pfnConnectCallBack, uConnectionNum, uSendBufferLen, uRecvBufferLen, uTempSendBufferLen, uTempRecvBufferLen, uSleepTime))
 	{
 		pServer->Release();
 		return NULL;
