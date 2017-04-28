@@ -8,8 +8,6 @@ CTcpConnection::CTcpConnection()
 	m_nSock				= INVALID_SOCKET;
 	m_uConnID			= 0;
 
-	m_eStatus			= NET_LINK_STATE_DISCONNNECT;
-
 	m_pSendBuf			= NULL;
 	m_pTempSendBuf		= NULL;
 	m_pFlush			= NULL;

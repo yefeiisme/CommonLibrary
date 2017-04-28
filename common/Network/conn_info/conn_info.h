@@ -36,8 +36,6 @@ private:
 	unsigned int				m_uTempRecvBufLen;
 	/**********************Ω” ’ª∫≥Â«¯**********************/
 
-	E_NET_LINK_STATE			m_eStatus;
-
 	SOCKET						m_nSock;
 	unsigned int				m_uConnID;
 
@@ -89,17 +87,7 @@ public:
 
 	inline bool					IsConnect()
 	{
-		return NET_LINK_STATE_CONNECT == m_eStatus;
-	}
-
-	inline bool					IsDisconnected()
-	{
-		return NET_LINK_STATE_DISCONNNECT == m_eStatus;
-	}
-
-	inline bool					IsWaitConnect()
-	{
-		return NET_LINK_STATE_WAI_CONNECT == m_eStatus;
+		return m_bTcpConnected;
 	}
 
 	bool						Initialize(unsigned int uRecvBufferLen, unsigned int uSendBufferLen, unsigned int uTempRecvBufLen, unsigned int uTempSendBufLen);
