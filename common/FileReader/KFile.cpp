@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "ITabFile.h"
 #include "KFilePath.h"
 #include "KFile.h"
 

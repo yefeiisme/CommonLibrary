@@ -11,8 +11,4 @@ public:
 
 IRandom	*CreateRandom();
 
-void	g_SetRootPath(char *pstrPathName);
-void	g_GetRootPath(char *pstrPathName);
-void	g_GetFullPath(char *pstrPathName, char *pstrFileName);
-
 #endif

@@ -24,6 +24,8 @@
     <ClCompile Include="KTabFile.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Share\Header\Base\IIniFile.h" />
+    <ClInclude Include="..\..\Share\Header\Base\ITabFile.h" />
     <ClInclude Include="KDebug.h" />
     <ClInclude Include="KFile.h" />
     <ClInclude Include="KFilePath.h" />

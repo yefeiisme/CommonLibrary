@@ -6,7 +6,7 @@
 class KFile
 {
 private:
-	FILE *		m_hFile;	// File Handle
+	FILE		*m_hFile;	// File Handle
 	DWORD		m_dwLen;	// File Size
 	DWORD		m_dwPos;	// File Pointer
 public:
