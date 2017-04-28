@@ -33,5 +33,6 @@
       <Filter>Server</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Share\Header\Base\INetwork.h" />
+    <ClInclude Include="NetworkHead.h" />
   </ItemGroup>
 </Project>

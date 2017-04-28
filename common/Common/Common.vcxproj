@@ -11,35 +11,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Client\Client.cpp" />
-    <ClCompile Include="conn_info\conn_info.cpp" />
-    <ClCompile Include="Server\Server.cpp" />
+    <ClCompile Include="common.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Share\Header\Base\INetwork.h" />
-    <ClInclude Include="Client\Client.h" />
-    <ClInclude Include="conn_info\conn_info.h" />
-    <ClInclude Include="NetworkHead.h" />
-    <ClInclude Include="Server\Server.h" />
+    <ClInclude Include="..\..\Share\Header\Base\ICommon.h" />
+    <ClInclude Include="common.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{35421367-FFD9-4434-8793-CF3818A86976}</ProjectGuid>
+    <ProjectGuid>{97095D4E-7235-4078-88A4-9540EB9F6C08}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Network</RootNamespace>
+    <RootNamespace>Common</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -84,7 +79,6 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../../Share/Header;../../Share/Header/Base;./;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

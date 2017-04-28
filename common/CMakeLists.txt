@@ -16,6 +16,7 @@ if (NOT SET_OUTPUT_DIRECTORY)
     set (SET_OUTPUT_DIRECTORY ON)
 endif (NOT SET_OUTPUT_DIRECTORY)
 
+add_subdirectory ("Common")
 add_subdirectory ("Daemon")
 add_subdirectory ("FileLog")
 add_subdirectory ("FileReader")

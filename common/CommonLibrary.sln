@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RingBuffer", "RingBuffer\Ri
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileReader", "FileReader\FileReader.vcxproj", "{487F08E7-01AF-460C-8EEE-C8D465DE3B9A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxproj", "{97095D4E-7235-4078-88A4-9540EB9F6C08}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -39,6 +41,10 @@ Global
 		{487F08E7-01AF-460C-8EEE-C8D465DE3B9A}.Debug|Win32.Build.0 = Debug|Win32
 		{487F08E7-01AF-460C-8EEE-C8D465DE3B9A}.Release|Win32.ActiveCfg = Release|Win32
 		{487F08E7-01AF-460C-8EEE-C8D465DE3B9A}.Release|Win32.Build.0 = Release|Win32
+		{97095D4E-7235-4078-88A4-9540EB9F6C08}.Debug|Win32.ActiveCfg = Debug|Win32
+		{97095D4E-7235-4078-88A4-9540EB9F6C08}.Debug|Win32.Build.0 = Debug|Win32
+		{97095D4E-7235-4078-88A4-9540EB9F6C08}.Release|Win32.ActiveCfg = Release|Win32
+		{97095D4E-7235-4078-88A4-9540EB9F6C08}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
