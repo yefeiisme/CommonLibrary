@@ -92,7 +92,7 @@ uint64 GetMicroTick()
 	return GetTickCount();
 #else
 	timeval now = {0,0};
-	gettimeofday(&now, NULL);
+	gettimeofday(&now, nullptr);
 	return	(now.tv_sec * 1000 + now.tv_usec / 1000);
 #endif
 }

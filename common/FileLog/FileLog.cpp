@@ -29,7 +29,7 @@ IFileLog	*g_pFileLog	= &CFileLog::Singleton();
 
 CFileLog::CFileLog()
 {
-	m_pFile			= NULL;
+	m_pFile			= nullptr;
 
 	m_nTimeNow		= 0;
 	memset(&m_tagTimeNow, 0, sizeof(m_tagTimeNow));
@@ -50,7 +50,8 @@ CFileLog::~CFileLog()
 	{
 		fclose(m_pFile);
 	}
-	m_pFile			= NULL;
+
+	m_pFile	= nullptr;
 }
 
 CFileLog &CFileLog::Singleton()
@@ -62,12 +63,12 @@ CFileLog &CFileLog::Singleton()
 
 void CFileLog::WriteLogInner(const char *pcLogMsg, unsigned char bKeepOpen)
 {
-	if (pcLogMsg == NULL)
+	if (pcLogMsg == nullptr)
 		return;
 
 	m_gLogMutex.lock();
 
-	m_nTimeNow			= time(NULL);
+	m_nTimeNow			= time(nullptr);
 	time_t  tmCurTime	= m_nTimeNow;
 	m_tagTimeNow		= *localtime(&tmCurTime);;
 
@@ -81,7 +82,7 @@ void CFileLog::WriteLogInner(const char *pcLogMsg, unsigned char bKeepOpen)
 
 		fclose(m_pFile);
 
-		m_pFile	= NULL;
+		m_pFile	= nullptr;
 	}
 
 	m_gLogMutex.unlock();
@@ -93,7 +94,7 @@ bool CFileLog::Initialize(char strDirectoryName[])
 	m_strRootDir[sizeof(m_strRootDir)-1]	= '\0';
 
 #ifdef WIN32
-	CreateDirectory(m_strRootDir, NULL);
+	CreateDirectory(m_strRootDir, nullptr);
 #else /* LINUX */
 	mkdir(m_strRootDir, 0700);
 #endif
@@ -133,7 +134,7 @@ void CFileLog::OpenDirectory()
 		m_tagDirTime.tm_mday
 		);
 #ifdef WIN32
-	CreateDirectory(m_strLogDir, NULL);
+	CreateDirectory(m_strLogDir, nullptr);
 #else /* LINUX */
 	mkdir(m_strLogDir, 0700);
 #endif
@@ -162,7 +163,7 @@ bool CFileLog::OpenLogFile()
 			);
 
 		m_pFile = fopen(szOpenPathName, "a+");
-		if (NULL == m_pFile)
+		if (nullptr == m_pFile)
 			return false;
 
 		fseek(m_pFile,0,SEEK_END);
@@ -185,7 +186,7 @@ bool CFileLog::OpenLogFile()
 		);
 
 	m_pFile = fopen(szOpenPathName, "a+");
-	if (NULL == m_pFile)
+	if (nullptr == m_pFile)
 		return false;
 
 	return true;

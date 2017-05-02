@@ -3,23 +3,23 @@
 
 CTcpConnection::CTcpConnection()
 {
-	m_pConnectTarget	= NULL;
+	m_pConnectTarget	= nullptr;
 
 	m_nSock				= INVALID_SOCKET;
 	m_uConnID			= 0;
 
-	m_pSendBuf			= NULL;
-	m_pTempSendBuf		= NULL;
-	m_pFlush			= NULL;
-	m_pSend				= NULL;
+	m_pSendBuf			= nullptr;
+	m_pTempSendBuf		= nullptr;
+	m_pFlush			= nullptr;
+	m_pSend				= nullptr;
 	m_uSendBufLen		= 0;
 	m_uTempSendBufLen	= 0;
 
-	m_pRecvBuf			= NULL;
-	m_pTempRecvBuf		= NULL;
-	m_pPack				= NULL;
-	m_pRecv				= NULL;
-	m_pUnreleased		= NULL;
+	m_pRecvBuf			= nullptr;
+	m_pTempRecvBuf		= nullptr;
+	m_pPack				= nullptr;
+	m_pRecv				= nullptr;
+	m_pUnreleased		= nullptr;
 	m_uRecvBufLen		= 0;
 	m_uTempRecvBufLen	= 0;
 
@@ -88,11 +88,11 @@ const char *CTcpConnection::GetIP()
 		g_pFileLog->WriteLog("%s:%d, CNetLink::reinit Client[%4u] getpeername Error[%d]\n", __FILE__, __LINE__, m_uConnID, errno);
 #elif defined(__APPLE__)
 #endif
-		return NULL;
+		return nullptr;
 	}
 
 	char	*strIP	= inet_ntoa(tagClientAddr.sin_addr);
-	if (NULL == strIP)
+	if (nullptr == strIP)
 	{
 #if defined(WIN32) || defined(WIN64)
 		g_pFileLog->WriteLog("%s:%d, CNetLink::reinit Client[%4u] inet_ntoa Error[%d]\n", __FILE__, __LINE__, m_uConnID, WSAGetLastError());
@@ -100,7 +100,7 @@ const char *CTcpConnection::GetIP()
 		g_pFileLog->WriteLog("%s:%d, CNetLink::reinit Client[%4u] inet_ntoa Error[%d]\n", __FILE__, __LINE__, m_uConnID, errno);
 #elif defined(__APPLE__)
 #endif
-		return NULL;
+		return nullptr;
 	}
 
 	return strIP;
@@ -194,7 +194,7 @@ int CTcpConnection::RecvData()
 const void *CTcpConnection::GetPack(unsigned int &uPackLen)
 {
 	if (!m_bTcpConnected)
-		return NULL;
+		return nullptr;
 	
 	char			*pPackStart	= m_pPack;
 	char			*pPackEnd	= m_pRecv;
@@ -207,7 +207,7 @@ const void *CTcpConnection::GetPack(unsigned int &uPackLen)
 	// verify the length is ok.
 	if (nDataLen < sizeof(unsigned short))
 	{
-		return NULL;
+		return nullptr;
 	}
 	
 	// get packet length, since the data length is larger than 2
@@ -234,21 +234,21 @@ const void *CTcpConnection::GetPack(unsigned int &uPackLen)
 	if (usPackLength <= sizeof(unsigned short))
 	{
 		m_pPack = m_pRecv;
-		return NULL;
+		return nullptr;
 	}
 	
 	// check if there is a whole packet in the buffer
 	if (usPackLength > nDataLen)
 	{
 		// only parts of the packet is received, do nothing, just return;
-		return NULL;
+		return nullptr;
 	}
 	
 	// substract the length of header
 	usPackLength -= sizeof(unsigned short);
 	
 	// return the ptr
-	char *pRetBuf = NULL;
+	char *pRetBuf = nullptr;
 	if (pPackEnd > pPackStart || usPackLength < nTailLen)
 	{
 		// Not wrap
@@ -263,7 +263,7 @@ const void *CTcpConnection::GetPack(unsigned int &uPackLen)
 		if (nTailLen > m_uTempRecvBufLen || usPackLength - nTailLen > m_uTempRecvBufLen - nTailLen)
 		{
 			g_pFileLog->WriteLog("[%s][%d] Client[%4u]:Recv temp buff overflow tail_length = %d tmp_recvbuf_len = %u, pack_length = %u\n", __FILE__, __LINE__, m_uConnID, nTailLen, m_uTempSendBufLen, uPackLen);
-			return NULL;
+			return nullptr;
 		}
 		memcpy(m_pTempRecvBuf, pPackStart, nTailLen);
 		memcpy(m_pTempRecvBuf + nTailLen, m_pRecvBuf, usPackLength - nTailLen);
@@ -282,7 +282,7 @@ const void *CTcpConnection::GetPack(unsigned int &uPackLen)
 	}
 	else
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	return pRetBuf;
@@ -442,7 +442,7 @@ int CTcpConnection::SendData()
 
 void CTcpConnection::Disconnect()
 {
-	m_pConnectTarget	= NULL;
+	m_pConnectTarget	= nullptr;
 	m_bTcpConnected		= false;
 
 	if (INVALID_SOCKET != m_nSock)

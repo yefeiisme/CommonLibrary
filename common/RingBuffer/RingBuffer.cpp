@@ -2,19 +2,15 @@
 #include "IRingBuffer.h"
 #include "RingBuffer.h"
 
-#ifndef NULL
-#define	NULL	0
-#endif
-
 #define RB_SPACE	(sizeof(void*)*2)
 
 CRingBuffer::CRingBuffer()
 {
-	m_pBuffer	= NULL;
-	m_pRead		= NULL;
-	m_pWrite	= NULL;
-	m_pTemp		= NULL;
-	m_pNextRead	= NULL;
+	m_pBuffer	= nullptr;
+	m_pRead		= nullptr;
+	m_pWrite	= nullptr;
+	m_pTemp		= nullptr;
+	m_pNextRead	= nullptr;
 	m_uBufLen	= 0;
 	m_uMaxPack	= 0;
 }
@@ -22,11 +18,11 @@ CRingBuffer::CRingBuffer()
 CRingBuffer::~CRingBuffer()
 {
 	delete []m_pBuffer;
-	m_pBuffer	= NULL;
-	m_pRead		= NULL;
-	m_pWrite	= NULL;
-	m_pTemp		= NULL;
-	m_pNextRead	= NULL;
+	m_pBuffer	= nullptr;
+	m_pRead		= nullptr;
+	m_pWrite	= nullptr;
+	m_pTemp		= nullptr;
+	m_pNextRead	= nullptr;
 	m_uBufLen	= 0;
 	m_uMaxPack	= 0;
 }
@@ -37,7 +33,7 @@ bool CRingBuffer::Initialize(const unsigned int uBufLen, const unsigned int uMax
 		return false;
 
 	m_pBuffer	= new char[uBufLen];
-	if (NULL == m_pBuffer)
+	if (nullptr == m_pBuffer)
 		return false;
 
 	memset(m_pBuffer, 0, uBufLen);
@@ -54,18 +50,18 @@ bool CRingBuffer::Initialize(const unsigned int uBufLen, const unsigned int uMax
 
 void CRingBuffer::Clear()
 {
-	m_pBuffer	= NULL;
-	m_pRead		= NULL;
-	m_pWrite	= NULL;
-	m_pTemp		= NULL;
-	m_pNextRead	= NULL;
+	m_pBuffer	= nullptr;
+	m_pRead		= nullptr;
+	m_pWrite	= nullptr;
+	m_pTemp		= nullptr;
+	m_pNextRead	= nullptr;
 	m_uBufLen	= 0;
 	m_uMaxPack	= 0;
 }
 
 bool CRingBuffer::Reinit()
 {
-	if (NULL == m_pBuffer)
+	if (nullptr == m_pBuffer)
 		return false;
 	
 	m_pRead		= m_pBuffer;
@@ -93,7 +89,7 @@ char* CRingBuffer::PutData(char *pRead, char *pWrite, char *pData, const unsigne
 		pWrite += uDataSize - uRightMargin;
 		
 		if (pWrite > m_pBuffer + m_uBufLen)
-			return NULL;
+			return nullptr;
 
 		return pWrite;
 	}
@@ -103,7 +99,7 @@ char* CRingBuffer::PutData(char *pRead, char *pWrite, char *pData, const unsigne
 	pWrite += uDataSize;
 
 	if (pWrite > m_pBuffer + m_uBufLen)
-		return NULL;
+		return nullptr;
 
 	return pWrite;
 }
@@ -132,10 +128,10 @@ unsigned CRingBuffer::GetDataLen(char *pRead, char *pWrite)
 
 bool CRingBuffer::SndPack(const void *pData, const unsigned int uDataSize)
 {
-	if (NULL == pData || 0 == uDataSize)
+	if (nullptr == pData || 0 == uDataSize)
 		return false;
 	
-	if (NULL == m_pBuffer)
+	if (nullptr == m_pBuffer)
 		return false;
 	
 	if (uDataSize > m_uMaxPack)
@@ -165,13 +161,13 @@ bool CRingBuffer::SndPack(const void *pData, const unsigned int uDataSize)
 	//写入长度
 	pWrite = PutData(pRead, pWrite, (char*)&uDataSize, sizeof(unsigned int));
 
-	if (pWrite == NULL)
+	if (pWrite == nullptr)
 		return false;
 
 	//写入数据
 	pWrite = PutData(pRead, pWrite, (char*)pData, uDataSize);
 
-	if (pWrite == NULL)
+	if (pWrite == nullptr)
 		return false;
 
 	//修改指针
@@ -184,8 +180,8 @@ const void *CRingBuffer::RcvPack(unsigned int &uDataSize)
 {
 	uDataSize = 0;
 
-	if (m_pBuffer == NULL)
-		return NULL;
+	if (m_pBuffer == nullptr)
+		return nullptr;
 
 	//释放上一次内容
 	m_pRead			= m_pNextRead;
@@ -199,11 +195,11 @@ const void *CRingBuffer::RcvPack(unsigned int &uDataSize)
 	unsigned int uContentSize	= pWrite >= pRead/*没有环绕*/ ? pWrite - pRead : m_uBufLen - (pRead - pWrite);
 
 	if (uContentSize > m_uBufLen - 1)
-		return NULL;
+		return nullptr;
 	////////////////////////////////////////////////////////
 
 	if (uContentSize <= sizeof(unsigned int))
-		return NULL;
+		return nullptr;
 
 	uDataSize = GetDataLen(pRead, pWrite);
 
@@ -213,7 +209,7 @@ const void *CRingBuffer::RcvPack(unsigned int &uDataSize)
 		 *	不应该产生的情况
 		 */
 		uDataSize = 0;
-		return NULL;
+		return nullptr;
 	}
 
 	/*
@@ -235,7 +231,7 @@ const void *CRingBuffer::RcvPack(unsigned int &uDataSize)
 		if (uReadLen - uRightMargin > m_uBufLen)
 		{
 			uDataSize = 0;
-			return NULL;
+			return nullptr;
 		}
 		//修改指针
 		m_pNextRead = m_pBuffer + (uReadLen - uRightMargin);
@@ -248,7 +244,7 @@ const void *CRingBuffer::RcvPack(unsigned int &uDataSize)
 		if (m_pNextRead + uReadLen > m_pBuffer + m_uBufLen)
 		{
 			uDataSize = 0;
-			return NULL;
+			return nullptr;
 		}
 
 		m_pNextRead += uReadLen; 
@@ -264,13 +260,13 @@ void CRingBuffer::Release()
 IRingBuffer	*CreateRingBuffer(const unsigned int uBufLen, const unsigned int uMaxPack)
 {
 	CRingBuffer	*pRingBuffer	= new CRingBuffer();
-	if (NULL == pRingBuffer)
-		return NULL;
+	if (nullptr == pRingBuffer)
+		return nullptr;
 
 	if (!pRingBuffer->Initialize(uBufLen, uMaxPack))
 	{
 		delete pRingBuffer;
-		return NULL;
+		return nullptr;
 	}
 
 	return pRingBuffer;

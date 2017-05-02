@@ -36,15 +36,11 @@
 #define MSG_NOSIGNAL	0
 #endif
 
-#ifndef NULL
-#define	NULL	0
-#endif
-
 #ifndef SAFE_DELETE
-#define SAFE_DELETE(Address)				{ if( NULL != (Address) )	delete(Address);	Address = NULL; }
+#define SAFE_DELETE(Address)				{ if( nullptr != (Address) )	delete(Address);	Address = nullptr; }
 #endif
 #ifndef SAFE_DELETE_ARR
-#define SAFE_DELETE_ARR(Address)			{ if( NULL != (Address) )	delete[](Address);	Address = NULL; }
+#define SAFE_DELETE_ARR(Address)			{ if( nullptr != (Address) )	delete[](Address);	Address = nullptr; }
 #endif
 
 #endif

@@ -15,13 +15,13 @@
 
 CServerNetwork::CServerNetwork()
 {
-	m_pfnConnectCallBack	= NULL;
-	m_pFunParam				= NULL;
+	m_pfnConnectCallBack	= nullptr;
+	m_pFunParam				= nullptr;
 
-	m_pListenLink			= NULL;
+	m_pListenLink			= nullptr;
 
-	m_pTcpConnection		= NULL;
-	m_pFreeConn				= NULL;
+	m_pTcpConnection		= nullptr;
+	m_pFreeConn				= nullptr;
 	m_uMaxConnCount			= 0;
 	m_uFreeConnIndex		= 0;
 
@@ -70,7 +70,7 @@ CServerNetwork::~CServerNetwork()
 
 int CServerNetwork::SetNoBlocking(CTcpConnection *pTcpConnection)
 {
-	if (NULL == pTcpConnection)
+	if (nullptr == pTcpConnection)
 		return -1;
 
 #if defined(WIN32) || defined(WIN64)
@@ -94,7 +94,7 @@ int CServerNetwork::SetNoBlocking(CTcpConnection *pTcpConnection)
 void CServerNetwork::AcceptClient(const SOCKET nNewSocket)
 {
 	CTcpConnection	*pNewLink	= GetNewConnection();
-	if (NULL == pNewLink)
+	if (nullptr == pNewLink)
 	{
 		closesocket(nNewSocket);
 		return;
@@ -126,7 +126,7 @@ void CServerNetwork::AcceptClient(const SOCKET nNewSocket)
 void CServerNetwork::DisconnectConnection(CTcpConnection *pTcpConnection)
 {
 #if defined(__linux)
-	int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, pTcpConnection->GetSock(), NULL);
+	int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, pTcpConnection->GetSock(), nullptr);
 #elif defined(__APPLE__)
 #endif
 	pTcpConnection->Disconnect();
@@ -155,7 +155,7 @@ void CServerNetwork::ReadAction()
 	FD_SET(m_pListenLink->GetSock(), &m_ReadSet);
 	timeval	timeout	= {0, 0};
 
-	if (select(0, &m_ReadSet, NULL, NULL, &timeout) > 0)
+	if (select(0, &m_ReadSet, nullptr, nullptr, &timeout) > 0)
 	{
 		if (FD_ISSET(m_pListenLink->GetSock(), &m_ReadSet))
 		{
@@ -169,7 +169,7 @@ void CServerNetwork::ReadAction()
 		}
 	}
 
-	CTcpConnection	*pTcpConnection	= NULL;
+	CTcpConnection	*pTcpConnection	= nullptr;
 
 	for (list<CTcpConnection*>::iterator Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
 	{
@@ -181,7 +181,7 @@ void CServerNetwork::ReadAction()
 		FD_SET(pTcpConnection->GetSock(), &m_ReadSet);
 		FD_SET(pTcpConnection->GetSock(), &m_ErrorSet);
 
-		if (select(0, &m_ReadSet, NULL, &m_ErrorSet, &timeout) <= 0)
+		if (select(0, &m_ReadSet, nullptr, &m_ErrorSet, &timeout) <= 0)
 		{
 			++Iter;
 			continue;
@@ -261,7 +261,7 @@ void CServerNetwork::ReadAction()
 
 void CServerNetwork::WriteAction()
 {
-	CTcpConnection	*pTcpConnection	= NULL;
+	CTcpConnection	*pTcpConnection	= nullptr;
 	for (list<CTcpConnection*>::iterator Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
 	{
 		pTcpConnection	= *Iter;
@@ -287,7 +287,7 @@ void CServerNetwork::WriteAction()
 
 void CServerNetwork::CloseAction()
 {
-	CTcpConnection	*pTcpConnection	= NULL;
+	CTcpConnection	*pTcpConnection	= nullptr;
 	for (list<CTcpConnection*>::iterator Iter = m_listCloseWaitConn.begin(); Iter != m_listCloseWaitConn.end();)
 	{
 		pTcpConnection	= *Iter;
@@ -365,21 +365,21 @@ bool CServerNetwork::Initialize(
 	if (0 == uSendBufferLen)
 		return false;
 
-	if (NULL == lpParam)
+	if (nullptr == lpParam)
 		return false;
 
-	if (NULL == pfnConnectCallBack)
+	if (nullptr == pfnConnectCallBack)
 		return false;
 
-	if (NULL == lpParam)
+	if (nullptr == lpParam)
 		return false;
 
 	m_pListenLink	= new CTcpConnection;
-	if (NULL == m_pListenLink)
+	if (nullptr == m_pListenLink)
 		return false;
 
 	m_pTcpConnection	= new CTcpConnection[m_uMaxConnCount];
-	if (NULL == m_pTcpConnection)
+	if (nullptr == m_pTcpConnection)
 		return false;
 
 	m_pFreeConn	= new CTcpConnection*[m_uMaxConnCount];
@@ -481,13 +481,13 @@ IServerNetwork *CreateServerNetwork(
 )
 {
 	CServerNetwork	*pServer = new CServerNetwork();
-	if (NULL == pServer)
-		return NULL;
+	if (nullptr == pServer)
+		return nullptr;
 
 	if (!pServer->Initialize(usPort, lpParam, pfnConnectCallBack, uConnectionNum, uSendBufferLen, uRecvBufferLen, uTempSendBufferLen, uTempRecvBufferLen, uSleepTime))
 	{
 		pServer->Release();
-		return NULL;
+		return nullptr;
 	}
 
 	return pServer;

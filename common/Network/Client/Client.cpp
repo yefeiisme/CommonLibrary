@@ -11,13 +11,13 @@
 
 CClientNetwork::CClientNetwork()
 {
-	m_pfnConnectCallBack	= NULL;
-	m_pFunParam				= NULL;
+	m_pfnConnectCallBack	= nullptr;
+	m_pFunParam				= nullptr;
 
-	m_pTcpConnection		= NULL;
-	m_pFreeConn				= NULL;
+	m_pTcpConnection		= nullptr;
+	m_pFreeConn				= nullptr;
 
-	m_pConnectBuffer		= NULL;
+	m_pConnectBuffer		= nullptr;
 
 	m_uMaxConnCount			= 0;
 	m_uFreeConnIndex		= 0;
@@ -54,7 +54,7 @@ CClientNetwork::~CClientNetwork()
 	if (m_pConnectBuffer)
 	{
 		m_pConnectBuffer->Release();
-		m_pConnectBuffer	= NULL;
+		m_pConnectBuffer	= nullptr;
 	}
 
 #if defined(WIN32) || defined(WIN64)
@@ -73,10 +73,10 @@ bool CClientNetwork::Initialize(
 	const unsigned int uSleepTime
 	)
 {
-	if (NULL == pfnConnectCallBack)
+	if (nullptr == pfnConnectCallBack)
 		return false;
 
-	if (NULL == lpParm)
+	if (nullptr == lpParm)
 		return false;
 
 	m_uMaxConnCount	= uClientCount;
@@ -91,15 +91,15 @@ bool CClientNetwork::Initialize(
 #endif
 
 	m_pConnectBuffer	= CreateRingBuffer(uClientCount*sizeof(SConnectRequest), sizeof(SConnectRequest));
-	if (NULL == m_pConnectBuffer)
+	if (nullptr == m_pConnectBuffer)
 		return false;
 
 	m_pTcpConnection	= new CTcpConnection[m_uMaxConnCount];
-	if (NULL == m_pTcpConnection)
+	if (nullptr == m_pTcpConnection)
 		return false;
 
 	m_pFreeConn	= new CTcpConnection*[m_uMaxConnCount];
-	if (NULL == m_pFreeConn)
+	if (nullptr == m_pFreeConn)
 		return false;
 
 	for (unsigned int uIndex = 0; uIndex < m_uMaxConnCount; ++uIndex)
@@ -148,7 +148,7 @@ void CClientNetwork::TryConnect(const void *pPack)
 
 	if (m_uFreeConnIndex >= m_uMaxConnCount)
 	{
-		m_pfnConnectCallBack(m_pFunParam, NULL, pRequest->pTarget);
+		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->pTarget);
 		return;
 	}
 
@@ -156,7 +156,7 @@ void CClientNetwork::TryConnect(const void *pPack)
 	if (nNewSock < 0)
 	{
 		g_pFileLog->WriteLog("socket failed,sock = %d\n", nNewSock);
-		m_pfnConnectCallBack(m_pFunParam, NULL, pRequest->pTarget);
+		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->pTarget);
 		return;
 	}
 
@@ -170,7 +170,7 @@ void CClientNetwork::TryConnect(const void *pPack)
 #endif
 	{
 		closesocket(nNewSock);
-		m_pfnConnectCallBack(m_pFunParam, NULL, pRequest->pTarget);
+		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->pTarget);
 		return;
 	}
 
@@ -219,7 +219,7 @@ void CClientNetwork::TryConnect(const void *pPack)
 	{
 		closesocket(nNewSock);
 
-		m_pfnConnectCallBack(m_pFunParam, NULL, pRequest->pTarget);
+		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->pTarget);
 	}
 }
 
@@ -245,10 +245,10 @@ void CClientNetwork::RemoveConnection(CTcpConnection *pTcpConnection)
 
 void CClientNetwork::ProcessConnectRequest()
 {
-	const void		*pPack	= NULL;
+	const void		*pPack	= nullptr;
 	unsigned int	uPackLen	= 0;
 
-	while (NULL != (pPack = m_pConnectBuffer->RcvPack(uPackLen)))
+	while (nullptr != (pPack = m_pConnectBuffer->RcvPack(uPackLen)))
 	{
 		TryConnect(pPack);
 	}
@@ -257,7 +257,7 @@ void CClientNetwork::ProcessConnectRequest()
 void CClientNetwork::ProcessConnectedConnection()
 {
 	timeval			timeout			= {0, 0};
-	CTcpConnection	*pTcpConnection	= NULL;
+	CTcpConnection	*pTcpConnection	= nullptr;
 
 	for (list<CTcpConnection*>::iterator Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
 	{
@@ -314,7 +314,7 @@ void CClientNetwork::ProcessConnectedConnection()
 void CClientNetwork::ProcessWaitConnectConnection()
 {
 	timeval			timeout			= {0, 0};
-	CTcpConnection	*pTcpConnection	= NULL;
+	CTcpConnection	*pTcpConnection	= nullptr;
 
 	for (list<CTcpConnection*>::iterator Iter = m_listWaitConnectedConn.begin(); Iter != m_listWaitConnectedConn.end(); ++Iter)
 	{
@@ -324,7 +324,7 @@ void CClientNetwork::ProcessWaitConnectConnection()
 
 		FD_SET(pTcpConnection->GetSock(), &m_WriteSet);
 
-		if (select(0, &m_ReadSet, &m_WriteSet, NULL, &timeout) <= 0)
+		if (select(0, &m_ReadSet, &m_WriteSet, nullptr, &timeout) <= 0)
 		{
 			++Iter;
 			continue;
@@ -357,7 +357,7 @@ void CClientNetwork::ProcessWaitConnectConnection()
 
 			Iter	= m_listWaitConnectedConn.erase(Iter);
 
-			m_pfnConnectCallBack(m_pFunParam, NULL, pTcpConnection->GetConnectTarget());
+			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnectTarget());
 
 			continue;
 		}
@@ -376,7 +376,7 @@ void CClientNetwork::ProcessWaitConnectConnection()
 
 			Iter	= m_listWaitConnectedConn.erase(Iter);
 
-			m_pfnConnectCallBack(m_pFunParam, NULL, pTcpConnection->GetConnectTarget());
+			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnectTarget());
 
 			continue;
 		}
@@ -389,7 +389,7 @@ void CClientNetwork::ProcessWaitConnectConnection()
 
 			Iter	= m_listWaitConnectedConn.erase(Iter);
 
-			m_pfnConnectCallBack(m_pFunParam, NULL, pTcpConnection->GetConnectTarget());
+			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnectTarget());
 
 			continue;
 		}
@@ -404,7 +404,7 @@ void CClientNetwork::ProcessWaitConnectConnection()
 
 void CClientNetwork::ProcessWaitCloseConnection()
 {
-	CTcpConnection	*pTcpConnection	= NULL;
+	CTcpConnection	*pTcpConnection	= nullptr;
 
 	for (list<CTcpConnection*>::iterator Iter = m_listCloseWaitConn.begin(); Iter != m_listCloseWaitConn.end();)
 	{
@@ -458,13 +458,13 @@ IClientNetwork *CreateClientNetwork(
 	)
 {
 	CClientNetwork	*pClient = new CClientNetwork();
-	if (NULL == pClient)
-		return NULL;
+	if (nullptr == pClient)
+		return nullptr;
 
 	if (!pClient->Initialize(uLinkCount, uMaxSendBuff, uMaxReceiveBuff, uMaxTempSendBuff, uMaxTempReceiveBuff, pfnConnectCallBack, lpParm, uSleepTime))
 	{
 		pClient->Release();
-		return NULL;
+		return nullptr;
 	}
 
 	return pClient;
