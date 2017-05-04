@@ -316,7 +316,7 @@ void CClientNetwork::ProcessWaitConnectConnection()
 	timeval			timeout			= {0, 0};
 	CTcpConnection	*pTcpConnection	= nullptr;
 
-	for (list<CTcpConnection*>::iterator Iter = m_listWaitConnectedConn.begin(); Iter != m_listWaitConnectedConn.end(); ++Iter)
+	for (list<CTcpConnection*>::iterator Iter = m_listWaitConnectedConn.begin(); Iter != m_listWaitConnectedConn.end();)
 	{
 		pTcpConnection	= *Iter;
 
@@ -425,6 +425,8 @@ void CClientNetwork::ThreadFunc()
 {
 	while (m_bRunning)
 	{
+		ProcessConnectRequest();
+
 		ProcessConnectedConnection();
 
 		ProcessWaitConnectConnection();
