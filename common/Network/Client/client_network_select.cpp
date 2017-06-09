@@ -1,7 +1,7 @@
-#include "../NetworkHead.h"
 #include "INetwork.h"
+#include "../NetworkHead.h"
 #include "../conn_info/conn_info.h"
-#include "Client.h"
+#include "client_network_select.h"
 #include "IFileLog.h"
 #include <thread>
 
@@ -137,7 +137,7 @@ bool CClientNetwork::ConnectTo(char *pstrAddr, const unsigned short usPort, void
 	tagRequest.pTarget	= pTarget;
 	tagRequest.usPort	= usPort;
 	strncpy(tagRequest.strAddr, pstrAddr, sizeof(tagRequest.strAddr));
-	tagRequest.strAddr[sizeof(tagRequest.strAddr)-1]	= '\0';
+	tagRequest.strAddr[sizeof(tagRequest.strAddr) - 1]	= '\0';
 
 	return m_pConnectBuffer->SndPack(&tagRequest, sizeof(tagRequest));
 }
@@ -256,7 +256,7 @@ void CClientNetwork::ProcessConnectRequest()
 
 void CClientNetwork::ProcessConnectedConnection()
 {
-	timeval			timeout			= {0, 0};
+	timeval			timeout			={ 0, 0 };
 	CTcpConnection	*pTcpConnection	= nullptr;
 
 	for (list<CTcpConnection*>::iterator Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
@@ -313,7 +313,7 @@ void CClientNetwork::ProcessConnectedConnection()
 
 void CClientNetwork::ProcessWaitConnectConnection()
 {
-	timeval			timeout			= {0, 0};
+	timeval			timeout			={ 0, 0 };
 	CTcpConnection	*pTcpConnection	= nullptr;
 
 	for (list<CTcpConnection*>::iterator Iter = m_listWaitConnectedConn.begin(); Iter != m_listWaitConnectedConn.end();)

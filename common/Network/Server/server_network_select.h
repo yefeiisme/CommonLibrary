@@ -1,5 +1,5 @@
-#ifndef _I_SERVER_H_
-#define _I_SERVER_H_
+#ifndef __SERVER_NETWORK_SELECT_H_
+#define __SERVER_NETWORK_SELECT_H_
 
 #include <list>
 #include "../NetworkHead.h"
@@ -22,13 +22,8 @@ private:
 
 	unsigned int			m_uSleepTime;
 
-#ifdef __linux
-	int						m_nepfd;
-#elif defined(WIN32) || defined(WIN64)
 	fd_set					m_ReadSet;
 	fd_set					m_ErrorSet;
-#elif defined(__APPLE__)
-#endif
 
 	list<CTcpConnection*>	m_listActiveConn;
 	list<CTcpConnection*>	m_listCloseWaitConn;

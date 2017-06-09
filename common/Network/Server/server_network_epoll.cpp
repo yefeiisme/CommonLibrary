@@ -169,7 +169,7 @@ void CServerNetwork::ReadAction()
 void CServerNetwork::WriteAction()
 {
 	CTcpConnection	*pTcpConnection	= nullptr;
-	for (list<CTcpConnection*>::iterator Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
+	for (auto Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
 	{
 		pTcpConnection	= *Iter;
 		if (!pTcpConnection->IsLogicConnected())
@@ -195,7 +195,7 @@ void CServerNetwork::WriteAction()
 void CServerNetwork::CloseAction()
 {
 	CTcpConnection	*pTcpConnection	= nullptr;
-	for (list<CTcpConnection*>::iterator Iter = m_listCloseWaitConn.begin(); Iter != m_listCloseWaitConn.end();)
+	for (auto Iter = m_listCloseWaitConn.begin(); Iter != m_listCloseWaitConn.end();)
 	{
 		pTcpConnection	= *Iter;
 		if (pTcpConnection->IsLogicConnected())
@@ -203,10 +203,11 @@ void CServerNetwork::CloseAction()
 			++Iter;
 			continue;
 		}
-
-		AddAvailableConnection(pTcpConnection);
-
-		Iter	= m_listCloseWaitConn.erase(Iter);
+		else
+		{
+			AddAvailableConnection(pTcpConnection);
+			Iter	= m_listCloseWaitConn.erase(Iter);
+		}
 	}
 }
 

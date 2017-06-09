@@ -12,27 +12,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Client\Client.cpp">
-      <Filter>Client</Filter>
-    </ClCompile>
     <ClCompile Include="conn_info\conn_info.cpp">
       <Filter>conn_info</Filter>
     </ClCompile>
-    <ClCompile Include="Server\Server.cpp">
+    <ClCompile Include="Server\server_network_select.cpp">
       <Filter>Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\client_network_select.cpp">
+      <Filter>Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Client\Client.h">
-      <Filter>Client</Filter>
-    </ClInclude>
     <ClInclude Include="conn_info\conn_info.h">
       <Filter>conn_info</Filter>
     </ClInclude>
-    <ClInclude Include="Server\Server.h">
-      <Filter>Server</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Share\Header\Base\INetwork.h" />
     <ClInclude Include="NetworkHead.h" />
+    <ClInclude Include="Server\server_network_select.h">
+      <Filter>Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\client_network_select.h">
+      <Filter>Client</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

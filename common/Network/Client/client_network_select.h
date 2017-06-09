@@ -1,5 +1,5 @@
-#ifndef _ICLIENT_H_
-#define _ICLIENT_H_
+#ifndef __CLIENT_NETWORK_SELECT_H_
+#define __CLIENT_NETWORK_SELECT_H_
 
 #include "INetwork.h"
 #include "IRingBuffer.h"

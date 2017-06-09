@@ -1,17 +1,8 @@
-#if defined(__linux)
-#include <sys/epoll.h>
-#elif defined(__APPLE__)
-#endif
 #include "../conn_info/conn_info.h"
 #include "INetwork.h"
-#include "Server.h"
+#include "server_network_select.h"
 #include "IFileLog.h"
 #include <thread>
-
-#if defined(__linux)
-#define MAX_EP 500
-#define MAX_EP_WAIT (MAX_EP/100)
-#endif
 
 CServerNetwork::CServerNetwork()
 {
@@ -27,13 +18,8 @@ CServerNetwork::CServerNetwork()
 
 	m_uSleepTime			= 0;
 
-#if defined(__linux)
-	m_nepfd					= 0;
-#elif defined(WIN32) || defined(WIN64)
 	FD_ZERO(&m_ReadSet);
 	FD_ZERO(&m_ErrorSet);
-#elif defined(__APPLE__)
-#endif
 
 	m_listActiveConn.clear();
 	m_listCloseWaitConn.clear();
@@ -60,11 +46,8 @@ CServerNetwork::~CServerNetwork()
 	SAFE_DELETE(m_pListenLink);
 	SAFE_DELETE_ARR(m_pTcpConnection);
 
-#if defined(__linux)
-	closesocket(m_nepfd);
-#elif defined(WIN32) || (WIN64)
+#if defined(WIN32) || (WIN64)
 	WSACleanup();
-#elif defined(__APPLE__)
 #endif
 }
 
@@ -77,16 +60,11 @@ int CServerNetwork::SetNoBlocking(CTcpConnection *pTcpConnection)
 	unsigned long ulNonBlock = 1;
 	return ioctlsocket(pTcpConnection->GetSock(), FIONBIO, &ulNonBlock);
 #elif defined(__linux)
-	int nFlags;
-	if ((nFlags = fcntl(pTcpConnection->GetSock(), F_GETFL, 0)) < 0 || fcntl(pTcpConnection->GetSock(), F_SETFL, nFlags | O_NONBLOCK) < 0)
+	int nFlags = fcntl(pTcpConnection->GetSock(), F_GETFL, 0);
+	if (nFlags < 0 || fcntl(pTcpConnection->GetSock(), F_SETFL, nFlags | O_NONBLOCK | O_ASYNC) < 0)
 		return -1;
 
-	epoll_event ev	={ 0 };
-
-	ev.data.ptr	= pTcpConnection;
-	ev.events	= EPOLLIN | EPOLLET | EPOLLPRI | EPOLLHUP | EPOLLERR;
-
-	return epoll_ctl(m_nepfd, EPOLL_CTL_ADD, pTcpConnection->GetSock(), &ev);
+	return 0;
 #elif defined(__APPLE__)
 #endif
 }
@@ -125,10 +103,6 @@ void CServerNetwork::AcceptClient(const SOCKET nNewSocket)
 
 void CServerNetwork::DisconnectConnection(CTcpConnection *pTcpConnection)
 {
-#if defined(__linux)
-	int ret = epoll_ctl(m_nepfd, EPOLL_CTL_DEL, pTcpConnection->GetSock(), nullptr);
-#elif defined(__APPLE__)
-#endif
 	pTcpConnection->Disconnect();
 }
 
@@ -146,16 +120,15 @@ void CServerNetwork::CloseConnection(CTcpConnection *pTcpConnection)
 	m_listCloseWaitConn.push_back(pTcpConnection);
 }
 
-#if defined(WIN32) || defined(WIN64)
 void CServerNetwork::ReadAction()
 {
 	FD_ZERO(&m_ReadSet);
 	FD_ZERO(&m_ErrorSet);
 
 	FD_SET(m_pListenLink->GetSock(), &m_ReadSet);
-	timeval	timeout	= {0, 0};
+	timeval	timeout	={ 0, 0 };
 
-	if (select(0, &m_ReadSet, nullptr, nullptr, &timeout) > 0)
+	if (select(1024, &m_ReadSet, nullptr, nullptr, &timeout) > 0)
 	{
 		if (FD_ISSET(m_pListenLink->GetSock(), &m_ReadSet))
 		{
@@ -171,7 +144,7 @@ void CServerNetwork::ReadAction()
 
 	CTcpConnection	*pTcpConnection	= nullptr;
 
-	for (list<CTcpConnection*>::iterator Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
+	for (auto Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
 	{
 		pTcpConnection	= *Iter;
 
@@ -181,7 +154,7 @@ void CServerNetwork::ReadAction()
 		FD_SET(pTcpConnection->GetSock(), &m_ReadSet);
 		FD_SET(pTcpConnection->GetSock(), &m_ErrorSet);
 
-		if (select(0, &m_ReadSet, nullptr, &m_ErrorSet, &timeout) <= 0)
+		if (select(1024, &m_ReadSet, nullptr, &m_ErrorSet, &timeout) <= 0)
 		{
 			++Iter;
 			continue;
@@ -206,63 +179,11 @@ void CServerNetwork::ReadAction()
 		}
 	}
 }
-#elif defined(__linux)
-void CServerNetwork::ReadAction()
-{
-	epoll_event wv[MAX_EP_WAIT] = {0};
-
-	int nRetCount = epoll_wait(m_nepfd, wv, MAX_EP_WAIT, 0);
-
-	if (nRetCount < 0)
-		return;
-
-	for (int nLoopCount = 0; nLoopCount < nRetCount; ++nLoopCount)
-	{
-		CTcpConnection	*pNetLink	= (CTcpConnection*)wv[nLoopCount].data.ptr;
-		if (pNetLink->GetSock() == m_pListenLink->GetSock())
-		{
-			sockaddr_in	client_addr;
-			socklen_t	length = sizeof(client_addr);
-			SOCKET		nNewSocket = INVALID_SOCKET;
-
-			while ((nNewSocket = accept(m_pListenLink->GetSock(), (sockaddr*)&client_addr, &length)) > 0)
-			{
-				AcceptClient(nNewSocket);
-			}
-
-			continue;
-		}
-
-		if (wv[nLoopCount].events & EPOLLIN)
-		{
-			if (pNetLink->RecvData() == -1)
-			{
-				CloseConnection(pNetLink);
-			}
-		}
-		else if (wv[nLoopCount].events & EPOLLPRI)
-		{
-			// data incoming
-			//do_read_pack( pNetLink->m_nSock );
-		}
-		else if (wv[nLoopCount].events & EPOLLHUP)
-		{
-			CloseConnection(pNetLink);
-		}
-		else if (wv[nLoopCount].events & EPOLLERR)
-		{
-			// error
-			CloseConnection(pNetLink);
-		}
-	}
-}
-#elif defined(__APPLE__)
-#endif	
 
 void CServerNetwork::WriteAction()
 {
 	CTcpConnection	*pTcpConnection	= nullptr;
-	for (list<CTcpConnection*>::iterator Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
+	for (auto Iter = m_listActiveConn.begin(); Iter != m_listActiveConn.end();)
 	{
 		pTcpConnection	= *Iter;
 		if (!pTcpConnection->IsLogicConnected())
@@ -288,7 +209,7 @@ void CServerNetwork::WriteAction()
 void CServerNetwork::CloseAction()
 {
 	CTcpConnection	*pTcpConnection	= nullptr;
-	for (list<CTcpConnection*>::iterator Iter = m_listCloseWaitConn.begin(); Iter != m_listCloseWaitConn.end();)
+	for (auto Iter = m_listCloseWaitConn.begin(); Iter != m_listCloseWaitConn.end();)
 	{
 		pTcpConnection	= *Iter;
 		if (pTcpConnection->IsLogicConnected())
@@ -344,7 +265,7 @@ bool CServerNetwork::Initialize(
 #if defined(WIN32) || defined(WIN64)
 	WORD wVersionRequested;
 	WSADATA wsaData;
-	
+
 	wVersionRequested = MAKEWORD(2, 2);
 	if (WSAStartup(wVersionRequested, &wsaData) != 0)
 	{
@@ -396,16 +317,6 @@ bool CServerNetwork::Initialize(
 		m_pFreeConn[uIndex]	= &m_pTcpConnection[uIndex];
 	}
 
-#if defined(__linux)
-	m_nepfd = epoll_create(MAX_EP);
-	if (-1 == m_nepfd)
-	{
-		g_pFileLog->WriteLog( "epoll_create failed!\n" );
-		return false;
-	}
-#elif defined(__APPLE__)
-#endif
-
 	struct sockaddr_in tagAddr;
 	memset(&tagAddr, 0, sizeof(tagAddr));
 	tagAddr.sin_family		= AF_INET;
@@ -445,7 +356,7 @@ bool CServerNetwork::Initialize(
 	if (-1 == SetNoBlocking(m_pListenLink))
 	{
 #if defined(WIN32) || defined(WIN64)
-		g_pFileLog->WriteLog("Set listen socket async failed! errno=%d\n", WSAGetLastError());   
+		g_pFileLog->WriteLog("Set listen socket async failed! errno=%d\n", WSAGetLastError());
 #elif defined(__linux)
 		g_pFileLog->WriteLog("Set listen socket async failed! errno=%d\n", errno);
 #elif defined(__APPLE__)

@@ -11,16 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Client\Client.cpp" />
+    <ClCompile Include="Client\client_network_select.cpp" />
     <ClCompile Include="conn_info\conn_info.cpp" />
-    <ClCompile Include="Server\Server.cpp" />
+    <ClCompile Include="Server\server_network_select.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Share\Header\Base\INetwork.h" />
-    <ClInclude Include="Client\Client.h" />
+    <ClInclude Include="Client\client_network_select.h" />
     <ClInclude Include="conn_info\conn_info.h" />
     <ClInclude Include="NetworkHead.h" />
-    <ClInclude Include="Server\Server.h" />
+    <ClInclude Include="Server\server_network_select.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{35421367-FFD9-4434-8793-CF3818A86976}</ProjectGuid>

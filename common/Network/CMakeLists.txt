@@ -1,7 +1,7 @@
 SET(LIBNETWORK_SRC
 conn_info/conn_info.cpp
 Server/server_network_epoll.cpp
-Client/Client.cpp
+Client/client_network_select.cpp
 )
 include_directories (
 	"../../Share/Header"
