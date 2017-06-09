@@ -1,6 +1,6 @@
 SET(LIBNETWORK_SRC
 conn_info/conn_info.cpp
-Server/Server.cpp
+Server/server_network_epoll.cpp
 Client/Client.cpp
 )
 include_directories (
