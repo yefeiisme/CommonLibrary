@@ -3,10 +3,10 @@
 
 CTcpConnection::CTcpConnection()
 {
-	m_pConnectTarget	= nullptr;
-
 	m_nSock				= INVALID_SOCKET;
 	m_uConnID			= 0;
+
+	m_uTargetIndex		= 0;
 
 	m_pSendBuf			= nullptr;
 	m_pTempSendBuf		= nullptr;
@@ -35,7 +35,7 @@ CTcpConnection::~CTcpConnection()
 	SAFE_DELETE_ARR(m_pTempSendBuf);
 }
 
-bool CTcpConnection::Initialize(unsigned int uRecvBufferLen, unsigned int uSendBufferLen, unsigned int uTempRecvBufLen, unsigned int uTempSendBufLen)
+bool CTcpConnection::Initialize(const unsigned int uIndex, unsigned int uRecvBufferLen, unsigned int uSendBufferLen, unsigned int uTempRecvBufLen, unsigned int uTempSendBufLen)
 {
 	if (0 == uRecvBufferLen || 0 == uSendBufferLen)
 		return false;
@@ -70,6 +70,8 @@ bool CTcpConnection::Initialize(unsigned int uRecvBufferLen, unsigned int uSendB
 		return false;
 
 	memset(m_pTempSendBuf, 0, sizeof(char)*m_uTempSendBufLen);
+
+	m_uConnID	= uIndex;
 
 	return true;
 }
@@ -442,8 +444,8 @@ int CTcpConnection::SendData()
 
 void CTcpConnection::Disconnect()
 {
-	m_pConnectTarget	= nullptr;
-	m_bTcpConnected		= false;
+	m_uTargetIndex	= 0xffffffff;
+	m_bTcpConnected	= false;
 
 	if (INVALID_SOCKET != m_nSock)
 	{

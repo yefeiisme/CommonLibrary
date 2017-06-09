@@ -285,10 +285,8 @@ bool CServerNetwork::Initialize(
 
 	for (unsigned int uIndex = 0; uIndex < m_uMaxConnCount; ++uIndex)
 	{
-		if (!m_pTcpConnection[uIndex].Initialize(uRecvBufferLen, uSendBufferLen, uTempSendBufferLen, uTempRecvBufferLen))
+		if (!m_pTcpConnection[uIndex].Initialize(uIndex, uRecvBufferLen, uSendBufferLen, uTempSendBufferLen, uTempRecvBufferLen))
 			return false;
-
-		m_pTcpConnection[uIndex].SetConnID(uIndex);
 
 		m_pFreeConn[uIndex]	= &m_pTcpConnection[uIndex];
 	}

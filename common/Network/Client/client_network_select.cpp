@@ -15,12 +15,10 @@ CClientNetwork::CClientNetwork()
 	m_pFunParam				= nullptr;
 
 	m_pTcpConnection		= nullptr;
-	m_pFreeConn				= nullptr;
 
 	m_pConnectBuffer		= nullptr;
 
 	m_uMaxConnCount			= 0;
-	m_uFreeConnIndex		= 0;
 
 	m_uSleepTime			= 0;
 
@@ -48,8 +46,6 @@ CClientNetwork::~CClientNetwork()
 
 	SAFE_DELETE_ARR(m_pTcpConnection);
 	m_uMaxConnCount	= 0;
-	SAFE_DELETE_ARR(m_pFreeConn);
-	m_uFreeConnIndex	= 0;
 
 	if (m_pConnectBuffer)
 	{
@@ -68,7 +64,7 @@ bool CClientNetwork::Initialize(
 	const unsigned int uRecvBuffLen,
 	const unsigned int uTempSendBuffLen,
 	const unsigned int uTempRecvBuffLen,
-	CALLBACK_CLIENT_EVENT pfnConnectCallBack,
+	pfnConnectEvent pfnConnectCallBack,
 	void *lpParm,
 	const unsigned int uSleepTime
 	)
@@ -90,7 +86,7 @@ bool CClientNetwork::Initialize(
 		return false;
 #endif
 
-	m_pConnectBuffer	= CreateRingBuffer(uClientCount*sizeof(SConnectRequest), sizeof(SConnectRequest));
+	m_pConnectBuffer	= CreateRingBuffer((uClientCount+1)*sizeof(SConnectRequest), sizeof(SConnectRequest));
 	if (nullptr == m_pConnectBuffer)
 		return false;
 
@@ -98,18 +94,10 @@ bool CClientNetwork::Initialize(
 	if (nullptr == m_pTcpConnection)
 		return false;
 
-	m_pFreeConn	= new CTcpConnection*[m_uMaxConnCount];
-	if (nullptr == m_pFreeConn)
-		return false;
-
 	for (unsigned int uIndex = 0; uIndex < m_uMaxConnCount; ++uIndex)
 	{
-		if (!m_pTcpConnection[uIndex].Initialize(uRecvBuffLen, uSendBuffLen, uTempRecvBuffLen, uTempSendBuffLen))
+		if (!m_pTcpConnection[uIndex].Initialize(uIndex, uRecvBuffLen, uSendBuffLen, uTempRecvBuffLen, uTempSendBuffLen))
 			return false;
-
-		m_pTcpConnection[uIndex].SetConnID(uIndex);
-
-		m_pFreeConn[uIndex]	= &m_pTcpConnection[uIndex];
 	}
 
 	m_pfnConnectCallBack	= pfnConnectCallBack;
@@ -130,11 +118,29 @@ void CClientNetwork::Release()
 	delete this;
 }
 
-bool CClientNetwork::ConnectTo(char *pstrAddr, const unsigned short usPort, void *pTarget)
+bool CClientNetwork::ConnectTo(char *pstrAddr, const unsigned short usPort, const unsigned int uIndex)
 {
 	SConnectRequest	tagRequest;
 	memset(&tagRequest, 0, sizeof(tagRequest));
-	tagRequest.pTarget	= pTarget;
+	tagRequest.uIndex	= uIndex;
+	tagRequest.usPort	= usPort;
+	strncpy(tagRequest.strAddr, pstrAddr, sizeof(tagRequest.strAddr));
+	tagRequest.strAddr[sizeof(tagRequest.strAddr) - 1]	= '\0';
+
+	return m_pConnectBuffer->SndPack(&tagRequest, sizeof(tagRequest));
+}
+
+bool CClientNetwork::ConnectToUrl(char *pstrAddr, const unsigned short usPort, const unsigned int uIndex)
+{
+	hostent	*pHost	= gethostbyname(pstrAddr);
+	if (nullptr == pHost)
+		return false;
+
+	// 后面还要将pHost转成IP地址
+	// ...
+	SConnectRequest	tagRequest;
+	memset(&tagRequest, 0, sizeof(tagRequest));
+	tagRequest.uIndex	= uIndex;
 	tagRequest.usPort	= usPort;
 	strncpy(tagRequest.strAddr, pstrAddr, sizeof(tagRequest.strAddr));
 	tagRequest.strAddr[sizeof(tagRequest.strAddr) - 1]	= '\0';
@@ -146,17 +152,24 @@ void CClientNetwork::TryConnect(const void *pPack)
 {
 	SConnectRequest	*pRequest	= (SConnectRequest*)pPack;
 
-	if (m_uFreeConnIndex >= m_uMaxConnCount)
+	if (pRequest->uIndex >= m_uMaxConnCount)
 	{
-		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->pTarget);
+		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->uIndex);
+		return;
+	}
+
+	CTcpConnection	&pTcpConnection = m_pTcpConnection[pRequest->uIndex];
+	if (pTcpConnection.IsLogicConnected() || pTcpConnection.IsSocketConnected())
+	{
+		// 这个连接已经是Connect状态，不再处理建立连接的消息
 		return;
 	}
 
 	int	nNewSock = socket(AF_INET, SOCK_STREAM, 0);
 	if (nNewSock < 0)
 	{
-		g_pFileLog->WriteLog("socket failed,sock = %d\n", nNewSock);
-		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->pTarget);
+		g_pFileLog->WriteLog("Create Socket[%d] Failed\n", nNewSock);
+		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->uIndex);
 		return;
 	}
 
@@ -170,7 +183,7 @@ void CClientNetwork::TryConnect(const void *pPack)
 #endif
 	{
 		closesocket(nNewSock);
-		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->pTarget);
+		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->uIndex);
 		return;
 	}
 
@@ -184,17 +197,13 @@ void CClientNetwork::TryConnect(const void *pPack)
 	int nRet = connect(nNewSock, (sockaddr*)&tagAddrIn, sizeof(tagAddrIn));
 	if (0 == nRet)
 	{
-		CTcpConnection	*pNewLink = m_pFreeConn[m_uFreeConnIndex];
+		pTcpConnection.ReInit(nNewSock);
 
-		++m_uFreeConnIndex;
+		pTcpConnection.Connected();
 
-		pNewLink->ReInit(nNewSock);
+		m_listActiveConn.push_back(&pTcpConnection);
 
-		pNewLink->Connected();
-
-		m_listActiveConn.push_back(pNewLink);
-
-		m_pfnConnectCallBack(m_pFunParam, pNewLink, pRequest->pTarget);
+		m_pfnConnectCallBack(m_pFunParam, &pTcpConnection, pRequest->uIndex);
 	}
 #if defined(WIN32) || defined(WIN64)
 	else if (WSAGetLastError() == WSAEWOULDBLOCK)
@@ -203,23 +212,19 @@ void CClientNetwork::TryConnect(const void *pPack)
 #elif defined(__APPLE__)
 #endif
 	{
-		CTcpConnection	*pNewLink = m_pFreeConn[m_uFreeConnIndex];
+		pTcpConnection.ReInit(nNewSock);
 
-		++m_uFreeConnIndex;
+		pTcpConnection.Connected();
 
-		pNewLink->ReInit(nNewSock);
+		pTcpConnection.SetConnectTarget(pRequest->uIndex);
 
-		pNewLink->Connected();
-
-		pNewLink->SetConnectTarget(pRequest->pTarget);
-
-		m_listWaitConnectedConn.push_back(pNewLink);
+		m_listWaitConnectedConn.push_back(&pTcpConnection);
 	}
 	else
 	{
 		closesocket(nNewSock);
 
-		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->pTarget);
+		m_pfnConnectCallBack(m_pFunParam, nullptr, pRequest->uIndex);
 	}
 }
 
@@ -351,13 +356,11 @@ void CClientNetwork::ProcessWaitConnectConnection()
 			g_pFileLog->WriteLog("getsockopt Failed errno=%d\n", errno);
 #elif defined(__APPLE__)
 #endif
-			RemoveConnection(pTcpConnection);
-
-			AddAvailableConnection(pTcpConnection);
+			pTcpConnection->Disconnect();
 
 			Iter	= m_listWaitConnectedConn.erase(Iter);
 
-			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnectTarget());
+			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnID());
 
 			continue;
 		}
@@ -370,26 +373,22 @@ void CClientNetwork::ProcessWaitConnectConnection()
 			g_pFileLog->WriteLog("Connnect Failed errno=%d\n", errno);
 #elif defined(__APPLE__)
 #endif
-			RemoveConnection(pTcpConnection);
-
-			AddAvailableConnection(pTcpConnection);
+			pTcpConnection->Disconnect();
 
 			Iter	= m_listWaitConnectedConn.erase(Iter);
 
-			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnectTarget());
+			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnID());
 
 			continue;
 		}
 
 		if (-1 == SetNoBlocking(pTcpConnection))
 		{
-			RemoveConnection(pTcpConnection);
-
-			AddAvailableConnection(pTcpConnection);
+			pTcpConnection->Disconnect();
 
 			Iter	= m_listWaitConnectedConn.erase(Iter);
 
-			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnectTarget());
+			m_pfnConnectCallBack(m_pFunParam, nullptr, pTcpConnection->GetConnID());
 
 			continue;
 		}
@@ -398,7 +397,7 @@ void CClientNetwork::ProcessWaitConnectConnection()
 
 		Iter	= m_listWaitConnectedConn.erase(Iter);
 
-		m_pfnConnectCallBack(m_pFunParam, pTcpConnection, pTcpConnection->GetConnectTarget());
+		m_pfnConnectCallBack(m_pFunParam, pTcpConnection, pTcpConnection->GetConnID());
 	}
 }
 
@@ -414,8 +413,6 @@ void CClientNetwork::ProcessWaitCloseConnection()
 			++Iter;
 			continue;
 		}
-
-		AddAvailableConnection(pTcpConnection);
 
 		Iter	= m_listCloseWaitConn.erase(Iter);
 	}
@@ -454,7 +451,7 @@ IClientNetwork *CreateClientNetwork(
 	unsigned int uMaxReceiveBuff,
 	unsigned int uMaxTempSendBuff,
 	unsigned int uMaxTempReceiveBuff,
-	CALLBACK_CLIENT_EVENT pfnConnectCallBack,
+	pfnConnectEvent pfnConnectCallBack,
 	void *lpParm,
 	const unsigned int uSleepTime
 	)

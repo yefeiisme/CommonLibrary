@@ -9,7 +9,7 @@ using namespace std;
 class CServerNetwork : public IServerNetwork
 {
 private:
-	CALLBACK_SERVER_EVENT	m_pfnConnectCallBack;
+	pfnConnectEvent			m_pfnConnectCallBack;
 	void					*m_pFunParam;
 
 	CTcpConnection			*m_pListenLink;
@@ -76,7 +76,7 @@ public:
 	bool					Initialize(
 										const unsigned short usPort,
 										void *lpParam,
-										CALLBACK_SERVER_EVENT pfnConnectCallBack,
+										pfnConnectEvent pfnConnectCallBack,
 										const unsigned int uConnectionNum,
 										const unsigned int uSendBufferLen,
 										const unsigned int uRecvBufferLen,

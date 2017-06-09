@@ -15,8 +15,6 @@ enum E_NET_LINK_STATE
 class CTcpConnection : public ITcpConnection
 {
 private:
-	void						*m_pConnectTarget;		// 用于连接成功后的回调对象（只做为客户端对象连接服务器端时有效）
-
 	/**********************发送缓冲区**********************/
 	char						*m_pSendBuf;
 	char						*m_pTempSendBuf;
@@ -39,20 +37,22 @@ private:
 	SOCKET						m_nSock;
 	unsigned int				m_uConnID;
 
+	unsigned int				m_uTargetIndex;		// 用于连接成功后的回调对象（只做为客户端对象连接服务器端时有效）
+
 	bool						m_bTcpConnected;		// 网络连接是否连接状态
 	bool						m_bLogicConnected;		// 外部逻辑是否连接状态
 public:
 	CTcpConnection();
 	~CTcpConnection();
 
-	inline void					SetConnectTarget(void *pTarget)
+	inline void					SetConnectTarget(const unsigned int uIndex)
 	{
-		m_pConnectTarget	= pTarget;
+		m_uTargetIndex	= uIndex;
 	}
 
-	inline void					*GetConnectTarget()
+	inline unsigned int			GetConnectTarget() const
 	{
-		return m_pConnectTarget;
+		return m_uTargetIndex;
 	}
 
 	inline SOCKET				GetSock()
@@ -65,14 +65,9 @@ public:
 		m_nSock	= nSock;
 	}
 
-	inline unsigned int			GetConnID()
+	inline unsigned int			GetConnID() const
 	{
 		return m_uConnID;
-	}
-
-	inline void					SetConnID(const unsigned int uConnID)
-	{
-		m_uConnID	= uConnID;
 	}
 
 	inline bool					IsSocketConnected()
@@ -90,7 +85,7 @@ public:
 		return m_bTcpConnected;
 	}
 
-	bool						Initialize(unsigned int uRecvBufferLen, unsigned int uSendBufferLen, unsigned int uTempRecvBufLen, unsigned int uTempSendBufLen);
+	bool						Initialize(const unsigned int uIndex, unsigned int uRecvBufferLen, unsigned int uSendBufferLen, unsigned int uTempRecvBufLen, unsigned int uTempSendBufLen);
 	inline void					ReInit(const int nSocket)
 	{
 		m_pUnreleased	= m_pRecv = m_pPack = m_pRecvBuf;

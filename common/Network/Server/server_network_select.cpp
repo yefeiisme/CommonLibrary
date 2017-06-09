@@ -98,7 +98,7 @@ void CServerNetwork::AcceptClient(const SOCKET nNewSocket)
 
 	m_listActiveConn.push_back(pNewLink);
 
-	m_pfnConnectCallBack(m_pFunParam, pNewLink);
+	m_pfnConnectCallBack(m_pFunParam, pNewLink, pNewLink->GetConnID());
 }
 
 void CServerNetwork::DisconnectConnection(CTcpConnection *pTcpConnection)
@@ -253,7 +253,7 @@ void CServerNetwork::ThreadFunc()
 bool CServerNetwork::Initialize(
 	const unsigned short usPort,
 	void *lpParam,
-	CALLBACK_SERVER_EVENT pfnConnectCallBack,
+	pfnConnectEvent pfnConnectCallBack,
 	const unsigned int uConnectionNum,
 	const unsigned int uSendBufferLen,
 	const unsigned int uRecvBufferLen,
@@ -309,10 +309,8 @@ bool CServerNetwork::Initialize(
 
 	for (unsigned int uIndex = 0; uIndex < m_uMaxConnCount; ++uIndex)
 	{
-		if (!m_pTcpConnection[uIndex].Initialize(uRecvBufferLen, uSendBufferLen, uTempSendBufferLen, uTempRecvBufferLen))
+		if (!m_pTcpConnection[uIndex].Initialize(uIndex, uRecvBufferLen, uSendBufferLen, uTempSendBufferLen, uTempRecvBufferLen))
 			return false;
-
-		m_pTcpConnection[uIndex].SetConnID(uIndex);
 
 		m_pFreeConn[uIndex]	= &m_pTcpConnection[uIndex];
 	}
@@ -382,7 +380,7 @@ void CServerNetwork::Release()
 IServerNetwork *CreateServerNetwork(
 	unsigned short usPort,
 	void *lpParam,
-	CALLBACK_SERVER_EVENT pfnConnectCallBack,
+	pfnConnectEvent pfnConnectCallBack,
 	unsigned int uConnectionNum,
 	unsigned int uSendBufferLen,
 	unsigned int uRecvBufferLen,

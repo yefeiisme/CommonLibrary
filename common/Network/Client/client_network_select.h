@@ -6,12 +6,12 @@
 #include <list>
 using namespace std;
 
-#define MAX_CONNECT_ADDR	128
+#define MAX_IPV4_ADDR_LEN	16
 
 struct SConnectRequest
 {
-	void			*pTarget;
-	char			strAddr[MAX_CONNECT_ADDR];
+	unsigned int	uIndex;
+	char			strAddr[MAX_IPV4_ADDR_LEN];
 	unsigned short	usPort;
 };
 
@@ -20,16 +20,14 @@ class CTcpConnection;
 class CClientNetwork : public IClientNetwork
 {
 private:
-	CALLBACK_CLIENT_EVENT	m_pfnConnectCallBack;
+	pfnConnectEvent			m_pfnConnectCallBack;
 	void					*m_pFunParam;
 
 	CTcpConnection			*m_pTcpConnection;
-	CTcpConnection			**m_pFreeConn;			// 当前处理空闲状态的CNetLink索引数组
 
 	IRingBuffer				*m_pConnectBuffer;		// 用于接收连接请求的缓冲区
 
 	unsigned int			m_uMaxConnCount;
-	unsigned int			m_uFreeConnIndex;		// m_pFreeLink的索引，类似list的iterator用法
 
 	unsigned int			m_uSleepTime;
 
@@ -53,7 +51,7 @@ public:
 										const unsigned int uRecvBuffLen,
 										const unsigned int uTempSendBuffLen,
 										const unsigned int uTempRecvBuffLen,
-										CALLBACK_CLIENT_EVENT pfnConnectCallBack,
+										pfnConnectEvent pfnConnectCallBack,
 										void *lpParm,
 										const unsigned int uSleepTime
 										);
@@ -68,16 +66,9 @@ public:
 	}
 
 	void					Release();
-	bool					ConnectTo(char *pstrAddr, const unsigned short usPort, void *pTarget);
+	bool					ConnectTo(char *pstrAddr, const unsigned short usPort, const unsigned int uIndex);
+	bool					ConnectToUrl(char *pstrAddr, const unsigned short usPort, const unsigned int uIndex);
 private:
-	inline void				AddAvailableConnection(CTcpConnection *pConnection)
-	{
-		if (m_uFreeConnIndex)
-		{
-			m_pFreeConn[--m_uFreeConnIndex]	= pConnection;
-		}
-	}
-
 	void					TryConnect(const void *pPack);
 	int						SetNoBlocking(CTcpConnection *pTcpConnection);
 	void					RemoveConnection(CTcpConnection *pTcpConnection);

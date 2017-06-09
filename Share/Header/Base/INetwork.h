@@ -22,19 +22,21 @@ public:
 class IClientNetwork
 {
 public:
-	virtual void		Stop() = 0;																	// 退出时调用（用于网络线程退出）
-	virtual bool		IsExited() = 0;																// 用于确认网络线程是否已经正常的退出
-	virtual void		Release() = 0;																// 释放内存空间
-	virtual bool		ConnectTo(char *pstrAddr, const unsigned short usPort, void *pTarget) = 0;	// 连接服务器
+	virtual void		Stop() = 0;																					// 退出时调用（用于网络线程退出）
+	virtual bool		IsExited() = 0;																				// 用于确认网络线程是否已经正常的退出
+	virtual void		Release() = 0;																				// 释放内存空间
+	virtual bool		ConnectTo(char *pstrAddr, const unsigned short usPort, const unsigned int uIndex) = 0;		// 连接服务器
+	virtual bool		ConnectToUrl(char *pstrAddr, const unsigned short usPort, const unsigned int uIndex) = 0;	// 连接服务器
 };
 
 typedef void(*CALLBACK_SERVER_EVENT)(void *lpParam, ITcpConnection *pTcpConnection);
 typedef void(*CALLBACK_CLIENT_EVENT)(void *lpParam, ITcpConnection *pTcpConnection, const void *pTarget);
+typedef void(*pfnConnectEvent)(void *pParam, ITcpConnection *pTcpConnection, const unsigned int uIndex);
 
 IServerNetwork *CreateServerNetwork(
 	const unsigned short usPort,				// 端口号
 	void *lpParam,								// 回调函数的参数
-	CALLBACK_SERVER_EVENT pfnConnectCallBack,	// 连接成功后的回调函数
+	pfnConnectEvent pfnConnectCallBack,			// 连接成功后的回调函数
 	const unsigned int uConnectionNum,			// 最大连接数
 	const unsigned int uSendBufferLen,			// 每个连接发送缓冲区的大小
 	const unsigned int uRecvBufferLen,			// 每个连接接收缓冲区的大小
@@ -48,7 +50,7 @@ IClientNetwork *CreateClientNetwork(
 	const unsigned int uRecvBufferLen,			// 每个连接接收缓冲区的大小
 	const unsigned int uTempSendBufferLen,		// 最大发送包的大小
 	const unsigned int uTempRecvBufferLen,		// 最大接收包的大小
-	CALLBACK_CLIENT_EVENT pfnConnectCallBack,	// 连接成功后的回调函数
+	pfnConnectEvent pfnConnectCallBack,			// 连接成功后的回调函数
 	void *lpParm,								// 回调函数的参数
 	const unsigned int uSleepTime				// 线程的Sleep时间
 	);
